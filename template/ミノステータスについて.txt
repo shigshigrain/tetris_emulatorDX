@@ -1,0 +1,17 @@
+rot x y id state
+
+1,2,3,4,5,7に関しては、stateは無意味（0を指定）
+id == 6(T_mino)についてはTspin指定ができる
+
+/*
+-1:Tspin deny
+0:Ignorance
+1:Tspin-single
+2:Tspin-double
+3:Tspin-triple
+4:Tspin-single mini
+5:Tspin-double mini
+6:Tspin-triple mini
+7:
+8:
+*/

@@ -1,0 +1,14 @@
+12
+101:BstdL_1-1.ttrp
+102:BstdL_1-2.ttrp
+103:BstdL_1-3.ttrp
+104:BstdR_1-1.ttrp
+105:BstdR_1-2.ttrp
+106:BstdR_1-3.ttrp
+1001:hotcakeZ_1-1.ttrp
+1002:hotcakeZ_2-1.ttrp
+1003:hotcakeZ_2-2.ttrp
+1004:hotcakeS_1-1.ttrp
+1005:hotcakeS_2-1.ttrp
+1006:hotcakeS_2-2.ttrp
+このファイルは読み込みを行わない。あくまで管理用
