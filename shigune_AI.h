@@ -251,7 +251,7 @@ struct cmd_pattern {
 	
 	//set<int> d_line;
 
-	void update(int u) {
+	void update(LL u) {
 		score += u;
 		return;
 	}
@@ -260,7 +260,7 @@ struct cmd_pattern {
 		ttrp_f = sf;
 	}
 
-	void set(int& s, const tetri& p, VI& list, int& d, int& r, int& k) {
+	void set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k) {
 		score = s;
 		pat = p;
 		cmd_list = list;
@@ -383,7 +383,52 @@ struct tetriplate {
 
 };
 
+
+
+
 namespace shig {
+
+	class game_container
+	{
+	public:
+		//private:
+		int hold_AI;
+		int current_AI;
+		int pc_cnt;
+		int SRS_kind;
+		int TS_kind;
+		int combo;
+		int height_sum;
+		int height_mxm;
+		int ttrp_size;
+		int ttrp_ofsY;
+		int total_s;
+		bool ttrp_able;
+		VI next_AI;
+		queue<int> q_next_AI;
+		VVI field_AI;
+		VVI p_field_AI;
+		VI height;
+		VVI strategy_map;
+		vector<strategy> strategy_list;
+		VI cmd_list;
+		set<cmd_pattern> cp;
+		vector<cmd_pattern> cv;
+		tetriplate slc_ttrp;
+		vector<cmd_pattern> ec;
+	public:
+		game_container();
+		~game_container();
+		bool set_gc_int(const VI& si);
+		bool set_gc_bool(const vector<bool>& sb);
+		bool set_gc_VI(const vector<VI>& sv);
+		bool set_gc_next(const VI& nx, const queue<int>& qnx);
+		bool set_gc_field(const vector<VVI>& sf);
+		bool set_gc_ttrp(const tetriplate& st);
+		bool add_gc_cmdp(const cmd_pattern& cg);
+		cmd_pattern get_gc_cmdp(int itr);
+
+	};
 
 	class shigune_AI
 	{
@@ -401,7 +446,6 @@ namespace shig {
 		int ttrp_size;
 		int ttrp_ofsY;
 		bool ttrp_able;
-		//tetriplate now_selected;
 		VI next_AI;
 		queue<int> q_next_AI;
 		VI todo;
@@ -431,6 +475,7 @@ namespace shig {
 		bool pc_check();
 		void bgn_strategy();
 		void search_way();
+		//cmd_pattern explore_choices(game_container gc);
 		void get_score(cmd_pattern& cd);
 		bool move_check(int to_x, int to_y, tetri& s_check);
 		bool SRS_check(int lr, tetri& s_now);
@@ -447,11 +492,16 @@ namespace shig {
 		bool ttrp_crr(tetri& now_p, int& size_l);
 		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL);
 		bool next_crr_check();
+		bool set_gc(game_container &gc);
+
 
 		~shigune_AI();
 	};
 
 	// hold : 1, soft : 2, hard : 3, L_rot : 4, R_rot : 5, l_move : 6, r_move : 7;
+
+	
+
 
 
 }
