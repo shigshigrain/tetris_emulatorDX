@@ -25,12 +25,14 @@ typedef vector<string> VS;
 #define shig_rep(i, n) shig_for(i, 0, n)
 #define shig_forB(bit,a,b) for(int bit = (a); bit < (1<<(b)); ++bit)
 #define shig_repB(bit,n) shig_forB(bit,0,n)
+#define all(v) (v).begin(), (v).end()
 #define CINI(a) int (a); cin >> (a)
 #define CINLL(a) LL (a); cin >> (a)
 #define CINI2(a, b) int a, b; cin >> (a) >> (b)
 #define CINLL2(a, b) LL a, b; cin >> (a) >> (b)
 #define tmp int temp = 0
 #define str string s
+
 
 // shigune : main part of AI and do decide act;
 const VI cx = { -1, 0, 1 };
@@ -445,6 +447,7 @@ namespace shig {
 		int height_mxm;
 		int ttrp_size;
 		int ttrp_ofsY;
+		int exp_cyc_lim;
 		bool ttrp_able;
 		VI next_AI;
 		queue<int> q_next_AI;
@@ -464,6 +467,9 @@ namespace shig {
 		VI ttrp_id_list;
 		vector<tetriplate> ttrp_list;
 		VI ttrp_bgnF;
+		vector<game_container> gc_slot;
+
+		game_container now_gc;
 
 	public:
 		shigune_AI(int ii);
@@ -475,7 +481,8 @@ namespace shig {
 		bool pc_check();
 		void bgn_strategy();
 		void search_way();
-		//cmd_pattern explore_choices(game_container gc);
+		void search_way(game_container gc, vector<pair<cmd_pattern, int>>& pcv);
+		cmd_pattern explore_choices(const game_container &gc_org);
 		void get_score(cmd_pattern& cd);
 		bool move_check(int to_x, int to_y, tetri& s_check);
 		bool SRS_check(int lr, tetri& s_now);
@@ -493,7 +500,7 @@ namespace shig {
 		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL);
 		bool next_crr_check();
 		bool set_gc(game_container &gc);
-
+		game_container update_gc(cmd_pattern& ct, game_container pre_gc);
 
 		~shigune_AI();
 	};

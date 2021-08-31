@@ -3,13 +3,9 @@
 int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
-
+const int branch_num = 5;
+const int fh = 45;
 //using namespace shig;
-
-
-
-
-
 
 namespace shig {
 
@@ -47,8 +43,6 @@ namespace shig {
         slc_ttrp.set_id_list(zv);
         vector<pairI2> zp(0, make_pair(0, 0));
         slc_ttrp.set_terms(zp);
-
-
     }
 
     bool game_container::set_gc_int(const VI& si) {
@@ -139,6 +133,7 @@ namespace shig {
         height_mxm = 0;
         ttrp_size = 0;
         ttrp_ofsY = 0;
+        exp_cyc_lim = 5;
         ttrp_able = false;
 		todo = VI(0);
 		field_AI = VVI(45, (VI(10, 0)));
@@ -164,7 +159,9 @@ namespace shig {
         now_ttrp.set_id_list(zv);
         vector<pairI2> zp(0, make_pair(0, 0));
         now_ttrp.set_terms(zp);
+        gc_slot = vector<game_container>(branch_num);
 
+        now_gc = game_container();
 	}
 
 
@@ -173,6 +170,11 @@ namespace shig {
 		get_state();
 		get_field();
         strategy_mark();
+
+        set_gc(now_gc);
+
+        //cmd_pattern select = explore_choices(now_gc);
+
         search_way();
         if (cp.size() == 0)return VI({3});
         sort(cv.begin(), cv.end(), [&](cmd_pattern const& l, cmd_pattern const& r) {return l.score > r.score; });
@@ -380,7 +382,7 @@ namespace shig {
 
     void shigune_AI::search_way() {
         p_field_AI = field_AI;
-        constexpr int mxm = 500;
+        constexpr int mxm = 400;
         VVI search_tree(mxm, VI(0));
         VI parent_tree(mxm, 0);
         int to = 0;
@@ -474,6 +476,59 @@ namespace shig {
         cp_itr = cp.begin();
 
         return;
+    }
+
+    void shigune_AI::search_way(game_container gc, vector<pair<cmd_pattern, int>>& pcv) {
+
+    }
+
+    cmd_pattern shigune_AI::explore_choices(const game_container& gc_org) {
+
+        vector<vector<cmd_pattern>> branch(branch_num, vector<cmd_pattern>(0));
+        vector<pair<cmd_pattern, int>> catalog(0);
+        catalog.reserve(600);
+
+
+        cp.clear();
+        cv.clear();
+        catalog.clear();
+        //search_way();
+        search_way(now_gc, catalog);
+
+        sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
+
+        if (cv.size() == 0) {
+            return cmd_pattern();
+        }
+        else if (cv.size() < branch_num && cv.size() > 0) {
+            return cv.front();
+        }
+        else {
+            shig_rep(i, branch_num) {
+                branch.at(i).push_back(cv.at(i));
+                auto [pct, ci] = catalog.at(i);
+                gc_slot.at(i) = update_gc(pct, now_gc);
+            }
+        }
+
+        shig_rep(n, exp_cyc_lim - 1) {
+            catalog.clear();
+
+            shig_rep(i, branch_num) search_way(gc_slot.at(i), catalog);
+            sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
+            vector<game_container> proxy_slot(branch_num);
+            shig_rep(i, branch_num) {
+                branch.at(i).push_back(cv.at(i));
+                auto [pct, ci] = catalog.at(i);
+                proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
+            }
+            gc_slot = proxy_slot;
+
+        }
+
+
+
+
     }
 
     void shigune_AI::get_score(cmd_pattern& cd) {
@@ -1681,6 +1736,63 @@ namespace shig {
         
 
         return true;
+    }
+
+    game_container shigune_AI::update_gc(cmd_pattern& ct, game_container gcp) {
+        //shigune_AI::apply_mino(gcp.field_AI, ct.pat);
+        
+        set<int> itr;
+        gcp.p_field_AI = gcp.field_AI;
+        shigune_AI::apply_mino(p_field_AI, ct.pat);
+        int rot = ct.pat.rot, size = ct.pat.px_size, H = ct.pat.mino[rot].size(), pW = p_field_AI[0].size();
+
+        shig_rep(i, H) {
+            int sY = ct.pat.Y - i - 1;
+            int cnt = 0;
+            if (sY < 0 || sY >= 44)continue;
+            shig_rep(j, pW) {
+                if (p_field_AI[sY][j] != 0) cnt++;
+                else break;
+            }
+            if (cnt == pW) itr.insert(sY);
+        }
+
+        VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
+        VVI proxy(0); proxy.reserve(45);
+        VVI pre(0); pre.reserve(45);
+
+        shig_rep(i, fh) {
+            decltype(itr)::iterator it = itr.find(i);
+            if (it == itr.end()) proxy.push_back(gcp.field_AI[i]);
+        }
+        while (proxy.size() < fh) proxy.push_back(empty);
+
+        gcp.field_AI = proxy;
+
+        if (ct.cmd_list.at(0) == 1) {
+            gcp.hold_AI = gcp.current_AI;
+            gcp.current_AI = gcp.next_AI.front();
+            gcp.q_next_AI.pop();
+            gcp.next_AI.clear();
+            while (!gcp.q_next_AI.empty()) {
+                int q = gcp.q_next_AI.front();
+                next_AI.push_back(q);
+                gcp.q_next_AI.pop();
+            }
+        }
+        else {
+            gcp.q_next_AI.pop();
+            gcp.next_AI.clear();
+            while (!gcp.q_next_AI.empty()) {
+                int q = gcp.q_next_AI.front();
+                next_AI.push_back(q);
+                gcp.q_next_AI.pop();
+            }
+        }
+
+
+
+        return gcp;
     }
 
 	shigune_AI::~shigune_AI() {

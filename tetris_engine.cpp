@@ -77,7 +77,7 @@ bool vfind_sorted(const vector<int> &v, const int key) {
 }
 
 void add_next_que(queue<int>&que, VI & sev) {
-
+    //VI sev = { 1, 2, 3, 4, 5, 6, 7 };
     random_device seed_gen;
     mt19937 engine(seed_gen());
     shuffle(sev.begin(), sev.end(), engine);
