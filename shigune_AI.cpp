@@ -5,6 +5,7 @@ int i32_one = 1;
 int i32_minus_one = -1;
 const int branch_num = 5;
 const int fh = 45;
+
 //using namespace shig;
 
 namespace shig {
@@ -13,6 +14,7 @@ namespace shig {
 
     game_container::game_container() {
 
+        slot_id = 0;
         hold_AI = 0;
         current_AI = 0;
         next_AI = VI(0);
@@ -479,6 +481,102 @@ namespace shig {
     }
 
     void shigune_AI::search_way(game_container gc, vector<pair<cmd_pattern, int>>& pcv) {
+        
+        constexpr int mxm = 400;
+        gc.p_field_AI = gc.field_AI;
+        VI rsv(0); rsv.reserve(30);
+        VVI search_tree(mxm, rsv);
+        VI parent_tree(mxm, 0);
+        int to = 0, parent = 0;
+        gc.cp.clear(); //gc.cv.clear();
+
+        shig_rep(i, base_cmd.size()) {
+            search_tree[i] = base_cmd[i];
+            parent_tree[i] = i;
+            to++;
+        }
+
+        int w = 0;
+        while (!search_tree[w].empty() && (w < mxm - 1)) {
+            bool can = true;
+            int w_size = search_tree[w].size();
+
+            tetri test; test.minset(gc.current_AI);
+            if (parent_tree[w] == w) {
+                test = get_current();
+                shig_rep(i, search_tree[w].size() - 1) {
+                    if (!move_mino(test, search_tree[w][i])) {
+                        can = false;
+                        break;
+                    }
+                }
+                if (!can) {
+                    w++;
+                    continue;
+                }
+                int sft = -1, hd_cnt = 0;
+                while (move_check(0, sft * (hd_cnt + 1), test)) hd_cnt++;
+                move_mino(test, 3);
+                cmd_pattern c(test, search_tree[w], parent_tree[w]);
+                decltype(cp)::iterator it = cp.find(c);
+                if (it != cp.end()) {
+                    w++;
+                    continue;
+                }
+                get_score(c);
+                pcv.push_back(make_pair(c, gc.slot_id));
+                cp.insert(c);
+                VI w_sft = search_tree[w];
+                w_sft.pop_back();
+                shig_rep(i, hd_cnt)w_sft.push_back(2);
+                search_tree[to] = w_sft; parent_tree[to] = parent_tree[w]; to++;
+                w++;
+            }
+            else {
+                if (search_tree[w].back() != 3) {
+                    const VI test_case = { 6, 7, 4, 5 };
+                    shig_rep(h, test_case.size()) {
+                        test = get_current();
+                        can = true;
+                        VI add_tree = search_tree[w];
+                        add_tree.push_back(test_case[h]);
+                        shig_rep(i, add_tree.size()) {
+                            if (!move_mino(test, add_tree[i])) {
+                                can = false;
+                                break;
+                            }
+                        }
+                        if (!can) continue;
+                        int sft = -1; int hd_cnt = 0;
+                        while (move_check(0, sft * (hd_cnt + 1), test)) hd_cnt++;
+                        move_mino(test, 3);
+                        add_tree.push_back(3);
+                        cmd_pattern c(test, add_tree, w);
+                        decltype(cp)::iterator it = cp.find(c);
+                        if (it != cp.end()) continue;
+                        cp.insert(c);
+                        get_score(c);
+                        cv.push_back(c);
+                        add_tree.pop_back();
+                        pcv.push_back(make_pair(c, gc.slot_id));
+                        shig_rep(i, hd_cnt)add_tree.push_back(2);
+                        if (to < mxm - 1) {
+                            search_tree[to] = add_tree;
+                            parent_tree[to] = parent_tree[w];
+                            to++;
+                        }
+                    }
+                    w++;
+                }
+                else {
+                    w++;
+                }
+            }
+        }
+
+
+        return;
+
 
     }
 
@@ -489,10 +587,8 @@ namespace shig {
         catalog.reserve(600);
 
 
-        cp.clear();
-        cv.clear();
+        cp.clear(); cv.clear();
         catalog.clear();
-        //search_way();
         search_way(now_gc, catalog);
 
         sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
@@ -508,11 +604,12 @@ namespace shig {
                 branch.at(i).push_back(cv.at(i));
                 auto [pct, ci] = catalog.at(i);
                 gc_slot.at(i) = update_gc(pct, now_gc);
+                gc_slot.at(i).slot_id = i;
             }
         }
 
         shig_rep(n, exp_cyc_lim - 1) {
-            catalog.clear();
+            catalog.clear(); catalog.reserve(600);
 
             shig_rep(i, branch_num) search_way(gc_slot.at(i), catalog);
             sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
@@ -521,12 +618,11 @@ namespace shig {
                 branch.at(i).push_back(cv.at(i));
                 auto [pct, ci] = catalog.at(i);
                 proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
+                proxy_slot.at(i).slot_id = i;
             }
             gc_slot = proxy_slot;
 
         }
-
-
 
 
     }
@@ -1757,9 +1853,8 @@ namespace shig {
             if (cnt == pW) itr.insert(sY);
         }
 
-        VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
+        const VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
         VVI proxy(0); proxy.reserve(45);
-        VVI pre(0); pre.reserve(45);
 
         shig_rep(i, fh) {
             decltype(itr)::iterator it = itr.find(i);
