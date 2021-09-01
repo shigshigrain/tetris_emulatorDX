@@ -5,6 +5,8 @@ int i32_one = 1;
 int i32_minus_one = -1;
 const int branch_num = 5;
 const int fh = 45;
+tetri null_tetri(0, 0, 0, 0);
+cmd_pattern null_cmd(null_tetri, { 3 }, -1);
 
 //using namespace shig;
 
@@ -40,11 +42,11 @@ namespace shig {
         ec.reserve(10);
         int z = 0;
         string zs = "nothing";
-        slc_ttrp.set(z, z, z, z, zs, z);
+        now_ttrp.set(z, z, z, z, zs, z);
         VI zv(0, 0);
-        slc_ttrp.set_id_list(zv);
+        now_ttrp.set_id_list(zv);
         vector<pairI2> zp(0, make_pair(0, 0));
-        slc_ttrp.set_terms(zp);
+        now_ttrp.set_terms(zp);
     }
 
     bool game_container::set_gc_int(const VI& si) {
@@ -90,7 +92,7 @@ namespace shig {
     }
 
     bool game_container::set_gc_ttrp(const tetriplate& st) {
-        slc_ttrp = st;
+        now_ttrp = st;
         return true;
     }
 
@@ -175,9 +177,9 @@ namespace shig {
 
         set_gc(now_gc);
 
-        //cmd_pattern select = explore_choices(now_gc);
-
-        search_way();
+        //cmd_pattern select = explore_choices(now_gc); Vƒ‹[ƒv’Tõ
+        search_way(); // ‹ŒˆêŽè’Tõ
+        
         if (cp.size() == 0)return VI({3});
         sort(cv.begin(), cv.end(), [&](cmd_pattern const& l, cmd_pattern const& r) {return l.score > r.score; });
 
@@ -185,6 +187,7 @@ namespace shig {
         set<int> el = erase_check_AI(select.pat);
         int els = el.size();
         
+
         VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
         VVI proxy(0); proxy.reserve(45);
         shig_rep(i, 45) {
@@ -195,7 +198,6 @@ namespace shig {
         strategy_map = proxy;
 
         VI mnL(8, 8);
-
         mnL[current_AI] = 0;
         mnL[hold_AI] = -1;
         shig_rep(i, min({ 5, (int)next_AI.size() })) {
@@ -205,15 +207,6 @@ namespace shig {
         bool all_TF = next_crr_check();
 
         shigune_AI::ttrp_check(select, els, mnL);
-
-
-
-        if (ttrp_able) {
-            ttrp_ofsY += el.size();
-        }
-        else {
-            ttrp_ofsY = 0;
-        }
 
 
         /*
@@ -480,7 +473,7 @@ namespace shig {
         return;
     }
 
-    void shigune_AI::search_way(game_container gc, vector<pair<cmd_pattern, int>>& pcv) {
+    void shigune_AI::search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv) {
         
         constexpr int mxm = 400;
         gc.p_field_AI = gc.field_AI;
@@ -505,7 +498,7 @@ namespace shig {
             if (parent_tree[w] == w) {
                 test = get_current();
                 shig_rep(i, search_tree[w].size() - 1) {
-                    if (!move_mino(test, search_tree[w][i])) {
+                    if (!move_mino(test, search_tree[w][i], gc)) {
                         can = false;
                         break;
                     }
@@ -515,15 +508,15 @@ namespace shig {
                     continue;
                 }
                 int sft = -1, hd_cnt = 0;
-                while (move_check(0, sft * (hd_cnt + 1), test)) hd_cnt++;
-                move_mino(test, 3);
+                while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
+                move_mino(test, 3, gc);
                 cmd_pattern c(test, search_tree[w], parent_tree[w]);
                 decltype(cp)::iterator it = cp.find(c);
                 if (it != cp.end()) {
                     w++;
                     continue;
                 }
-                get_score(c);
+                get_score(c, gc);
                 pcv.push_back(make_pair(c, gc.slot_id));
                 cp.insert(c);
                 VI w_sft = search_tree[w];
@@ -541,22 +534,21 @@ namespace shig {
                         VI add_tree = search_tree[w];
                         add_tree.push_back(test_case[h]);
                         shig_rep(i, add_tree.size()) {
-                            if (!move_mino(test, add_tree[i])) {
+                            if (!move_mino(test, add_tree[i], gc)) {
                                 can = false;
                                 break;
                             }
                         }
                         if (!can) continue;
                         int sft = -1; int hd_cnt = 0;
-                        while (move_check(0, sft * (hd_cnt + 1), test)) hd_cnt++;
-                        move_mino(test, 3);
+                        while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
+                        move_mino(test, 3, gc);
                         add_tree.push_back(3);
                         cmd_pattern c(test, add_tree, w);
                         decltype(cp)::iterator it = cp.find(c);
                         if (it != cp.end()) continue;
+                        get_score(c, gc);
                         cp.insert(c);
-                        get_score(c);
-                        cv.push_back(c);
                         add_tree.pop_back();
                         pcv.push_back(make_pair(c, gc.slot_id));
                         shig_rep(i, hd_cnt)add_tree.push_back(2);
@@ -584,7 +576,7 @@ namespace shig {
 
         vector<vector<cmd_pattern>> branch(branch_num, vector<cmd_pattern>(0));
         vector<pair<cmd_pattern, int>> catalog(0);
-        catalog.reserve(600);
+        catalog.reserve(700);
 
 
         cp.clear(); cv.clear();
@@ -594,7 +586,7 @@ namespace shig {
         sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
 
         if (cv.size() == 0) {
-            return cmd_pattern();
+            return null_cmd;
         }
         else if (cv.size() < branch_num && cv.size() > 0) {
             return cv.front();
@@ -623,6 +615,10 @@ namespace shig {
             gc_slot = proxy_slot;
 
         }
+
+        if (catalog.size() == 0)return null_cmd;
+        auto [r, ri] = catalog.at(0);
+        return r;
 
 
     }
@@ -938,6 +934,317 @@ namespace shig {
         return;
     }
 
+    void shigune_AI::get_score(cmd_pattern& cd, game_container& gcs) {
+
+        cd.set_ts(gcs.SRS_kind, gcs.TS_kind);
+        set<int> L = erase_check_AI(cd.pat, gcs);
+        LL fusion = 0;
+        LL contact = 0;
+        LL touch = 0;
+        LL high = cd.pat.Y;
+        LL cmb = 0;
+
+        int rot = cd.pat.rot;
+        int idnt = cd.pat.id - 1;
+        int size = cd.pat.px_size;
+        int H = cd.pat.mino[rot].size();
+        int W = cd.pat.mino[rot][0].size();
+
+        //fusion score
+        /*
+        shig_rep(i, H) {
+            shig_rep(j, W) {
+                int sX = cd.pat.X + j;
+                if (sX < 0 || sX >= 10)continue;
+                int sY = cd.pat.Y - i - 1;
+                if (sY < 0 || sY >= (field_AI.size() - 1))continue;
+                if (strategy_map[sY][sX] == cd.pat.mino[rot][i][j] && strategy_map[sY][sX] != 0) {
+                    fusion += 100;
+                }
+                else {
+                    if (strategy_map[sY][sX] == -1 && cd.pat.mino[rot][i][j] != 0) {
+                        fusion -= 100;
+                    }
+                    else if (strategy_map[sY][sX] > 0 && cd.pat.mino[rot][i][j] != 0) {
+                        fusion -= 50;
+                    }
+                    else if (strategy_map[sY][sX] > 0 && cd.pat.mino[rot][i][j] == 0) {
+                        //fusion += 500;
+                    }
+                }
+            }
+        }
+
+        */
+
+        //contact
+        shig_rep(j, W) {
+            if (ch[idnt][rot][j] == 1) {
+                int xp = cd.pat.X + j;
+                int h = cd.pat.Y - gcs.height[xp] - 1;
+                if (h >= 0 && h < H) {
+                    if (cd.pat.mino[rot][h][j] != 0)contact += 12;
+                    else contact -= 10;
+                }
+                else contact -= 10;
+
+            }
+        }
+
+
+        //high
+        if (high > 8) {
+            high = (-1 * high * high);
+        }
+        else {
+            high = (high * -9);
+        }
+        //high *= -1000;
+
+
+        //closure & touch
+        shig_rep(i, H) {
+            shig_rep(j, W) {
+                if (cd.pat.mino[rot][i][j] == 0)continue;
+                int sX = cd.pat.X + j;
+                if (sX < 0 || sX >= 10)continue;
+                int sY = cd.pat.Y - i - 1;
+                if (sY < 0 || sY >= (gcs.field_AI.size() - 1))continue;
+                apply_mino(gcs.p_field_AI, cd.pat);
+                set<pairI2> p_check;
+                shig_rep(k, cy.size())shig_rep(l, cx.size()) {
+                    if (k == 0 && l == 0)continue;
+                    int ssX = cd.pat.X + j + cx[k];
+                    if (ssX < 0 || ssX >= 10) {
+                        touch += 10;
+                        continue;
+                    }
+                    int ssY = cd.pat.Y - i - 1 + cy[l];
+                    if (ssY < 0 || ssY >= (gcs.field_AI.size() - 1)) {
+                        touch += 10;
+                        continue;
+                    }
+                    if (gcs.field_AI[ssY][ssX] != 0)touch += 30;
+                    else touch -= 30;
+
+                    if (gcs.p_field_AI[ssY][ssX] != 0)continue;
+
+                    int closure = 0;
+                    shig_rep(m, cc.size()) {
+                        int sssX = cd.pat.X + j + cx[k] + cc[m].first;
+                        if (sssX < 0 || sssX >= 10) {
+                            closure++;
+                            continue;
+                        }
+                        int sssY = cd.pat.Y - i - 1 + cy[l] + cc[m].second;
+                        if (sssY < 0 || sssY >= (gcs.field_AI.size() - 1)) {
+                            closure++;
+                            continue;
+                        }
+                        if (gcs.p_field_AI[sssY][sssX] != 0)closure++;
+                    }
+
+                    if (closure == 4)touch -= 100;
+
+
+                }
+
+            }
+        }
+
+        //cmb
+        LL cmb_rate = 100;
+        if (combo * L.size() > 0) {
+            cd.update(cmb_rate * 10LL);
+        }
+        else if (combo == 0 && L.size() == 0) {
+            cd.update(cmb_rate);
+        }
+        else {
+            cd.update(cmb_rate * -1LL);
+        }
+
+        auto chk_PC = [&] {
+            bool cnt_pc = true;
+            shig_rep(i, 10) {
+                if (gcs.p_field_AI[0][i] != 0) {
+                    cnt_pc = false;
+                    break;
+                }
+            }
+            return cnt_pc;
+        }();
+
+        if (chk_PC)cd.update(114514810);
+
+
+        int p_A = 128;
+        LL ve = 0;
+        if (L.size() == 0) {
+
+            if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                ve -= 500;
+            }
+            else {
+                ve += 20;
+            }
+        }
+        else if (L.size() == 1) {
+            if (gcs.TS_kind == 1) {
+
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 500;
+                }
+                else {
+                    ve += 80;
+                }
+            }
+            else if (gcs.TS_kind == 2) {
+
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 40;
+                }
+                else {
+                    ve += 160;
+                }
+            }
+            else {
+
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 60;
+                }
+                else {
+                    ve += 30;
+                }
+            }
+        }
+        else if (L.size() == 2) {
+            if (gcs.TS_kind == 1) {
+
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 150;
+                }
+                else {
+                    ve += 200;
+                }
+            }
+            else if (gcs.TS_kind == 2) {
+                ve += 1;
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 5;
+                }
+            }
+            else {
+
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 100;
+                }
+                else {
+                    ve += 50;
+                }
+            }
+        }
+        else if (L.size() == 3) {
+            if (gcs.TS_kind == 1) {
+                //ve += 400;
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 300;
+                }
+                else {
+                    ve += 400;
+                }
+            }
+            else if (gcs.TS_kind == 2) {
+                ve += 0;
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve -= 0;
+                }
+            }
+            else {
+
+                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                    ve += 120;
+                }
+                else {
+                    ve += 10;
+                }
+            }
+        }
+        else if (L.size() == 4) {
+            ve += 2000;
+            if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                ve += 3000;
+            }
+        }
+
+
+        LL ttrp_rate = 100000;
+
+        bool chk_f = false;
+        tetri ofs_cdp = cd.pat;
+        ofs_cdp.addY(gcs.ttrp_ofsY);
+
+
+        if (gcs.ttrp_able) {
+            shig_rep(i, min({ gcs.now_ttrp.mino_num , (int)gcs.now_ttrp.list_mino.size() })) {
+                if (gcs.now_ttrp.list_mino[i] == ofs_cdp) {
+                    if (cd.pat.id == 6) {
+                        if ((gcs.now_ttrp.list_mino_s[i]) == L.size() && gcs.TS_kind == 1) {
+                            chk_f = true;
+                        }
+                        else if (gcs.now_ttrp.list_mino_s[i] == 0 && gcs.TS_kind == 0) {
+                            chk_f = true;
+                        }
+                        else {
+                            chk_f = false;
+                            cd.update(ttrp_rate * -1LL);
+                        }
+                    }
+                    else {
+                        chk_f = true;
+                    }
+
+                    break;
+
+                }
+                else {
+                    chk_f = false;
+                }
+            }
+
+        }
+
+        if (chk_f == true) {
+            cd.update(ttrp_rate);
+            cd.set_ttrpF(cd.pat.id);
+            return;
+        }
+        else {
+            LL pnl = -100;
+            cd.update(pnl);
+        }
+
+        fusion *= 100;
+        cd.update(fusion);
+
+        LL ve_rate = 100;
+        if (gcs.height_sum > p_A || gcs.height_mxm > 11) {
+            ve_rate *= 10;
+        }
+        ve *= ve_rate;
+        cd.update(ve);
+
+        touch *= 50;
+        cd.update(touch);
+
+        cd.update(high);
+
+        contact *= 50;
+        cd.update(contact);
+
+        return;
+    }
+
 	bool shigune_AI::move_check(int to_x, int to_y, tetri& s_check) {
 		int cnt = 0, cntt = 4;
 		int rot = s_check.rot;
@@ -957,6 +1264,26 @@ namespace shig {
 		}
         return cnt == cntt;
 	}
+
+    bool shigune_AI::move_check(int to_x, int to_y, tetri& s_check, game_container& ggc) {
+        int cnt = 0, cntt = 4;
+        int rot = s_check.rot;
+        int size = s_check.px_size;
+        int H = s_check.mino[rot].size();
+        int W = s_check.mino[rot][0].size();
+        shig_rep(i, H) {
+            shig_rep(j, W) {
+                if (s_check.mino[rot][i][j] != 0) {
+                    int sX = s_check.X + j + to_x;
+                    if (sX < 0 || sX >= 10)break;
+                    int sY = s_check.Y - i + to_y;
+                    if (sY <= 0 || sY >= (field_AI.size() - 1))break;
+                    if (ggc.field_AI[sY - 1LL][sX] == 0)cnt++;
+                }
+            }
+        }
+        return cnt == cntt;
+    }
 
 	bool shigune_AI::SRS_check(int lr, tetri& now) {
         tetri test = now;
@@ -1457,6 +1784,505 @@ namespace shig {
 
 	}
 
+    bool shigune_AI::SRS_check(int lr, tetri& now, game_container& ggc) {
+        tetri test = now;
+        int size = test.px_size;
+        int to_X = 0, to_Y = 0, rot = test.rot;
+        ggc.SRS_kind = -1;
+        bool can = true;
+        if (test.id == 1) {//I-mino SRS
+            if (test.rot == 0) {
+                if (lr == -1) {
+                    test.set_rot(3);
+                    rot = 3;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = -1;
+                    }
+                    else if (move_check(2, 0, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = 2;
+                    }
+                    else if (move_check(-1, 2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_X = -1;
+                        to_Y = 2;
+                    }
+                    else if (move_check(2, -1, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = 2;
+                        to_Y = -1;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(1);
+                    rot = 1;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-2, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = -2;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = 1;
+                    }
+                    else if (move_check(-2, -1, test, ggc)) {
+                        SRS_kind = 3;
+                        to_X = -2;
+                        to_Y = -1;
+                    }
+                    else if (move_check(1, 2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = 1;
+                        to_Y = 2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+            else if (test.rot == 1) {
+                if (lr == -1) {
+                    test.set_rot(0);
+                    rot = 0;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(2, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = 2;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = -1;
+                    }
+                    else if (move_check(2, 1, test, ggc)) {
+                        SRS_kind = 3;
+                        to_X = 2;
+                        to_Y = 1;
+                    }
+                    else if (move_check(-1, -2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = -1;
+                        to_Y = -2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(2);
+                    rot = 2;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = -1;
+                    }
+                    else if (move_check(2, 0, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = 2;
+                    }
+                    else if (move_check(-1, 2, test, ggc)) {
+                        to_X = -1;
+                        to_Y = 2;
+                    }
+                    else if (move_check(2, -1, test, ggc)) {
+                        to_X = 2;
+                        to_Y = -1;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+            else if (test.rot == 2) {
+                if (lr == -1) {
+                    test.set_rot(1);
+                    rot = 1;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        to_X = 1;
+                        SRS_kind = 1;
+                    }
+                    else if (move_check(-2, 0, test, ggc)) {
+                        to_X = -2;
+                        SRS_kind = 2;
+                    }
+                    else if (move_check(1, -2, test, ggc)) {
+                        to_X = 1;
+                        to_Y = -2;
+                        SRS_kind = 3;
+                    }
+                    else if (move_check(-2, 1, test, ggc)) {
+                        to_X = -2;
+                        to_Y = 1;
+                        SRS_kind = 4;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(3);
+                    rot = 3;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(2, 0, test, ggc)) {
+                        to_X = 2;
+                        SRS_kind = 1;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        to_X = -1;
+                        SRS_kind = 2;
+                    }
+                    else if (move_check(2, 1, test, ggc)) {
+                        to_X = 2;
+                        to_Y = 1;
+                        SRS_kind = 3;
+                    }
+                    else if (move_check(-1, -2, test, ggc)) {
+                        to_X = -1;
+                        to_Y = -2;
+                        SRS_kind = 4;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+            else if (test.rot == 3) {
+                if (lr == -1) {
+                    test.set_rot(2);
+                    rot = 2;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-2, 0, test, ggc)) {
+                        to_X = -2;
+                        SRS_kind = 1;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        to_X = 1;
+                        SRS_kind = 2;
+                    }
+                    else if (move_check(-2, -1, test, ggc)) {
+                        to_X = -2;
+                        to_Y = -1;
+                        SRS_kind = 3;
+                    }
+                    else if (move_check(1, 2, test, ggc)) {
+                        to_X = 1;
+                        to_Y = 2;
+                        SRS_kind = 4;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(0);
+                    rot = 0;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        to_X = 1;
+                        SRS_kind = 1;
+                    }
+                    else if (move_check(-2, 0, test, ggc)) {
+                        to_X = -2;
+                        SRS_kind = 2;
+                    }
+                    else if (move_check(1, -2, test, ggc)) {
+                        to_X = 1;
+                        to_Y = -2;
+                        SRS_kind = 3;
+                    }
+                    else if (move_check(-2, 1, test, ggc)) {
+                        to_X = -2;
+                        to_Y = 1;
+                        SRS_kind = 4;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+        }
+        else {
+            if (test.rot == 0) {
+                if (lr == -1) {
+                    test.set_rot(3);
+                    rot = 3;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = 1;
+                    }
+                    else if (move_check(1, 1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = 1;
+                        to_Y = 1;
+                    }
+                    else if (move_check(0, -2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = -2;
+                    }
+                    else if (move_check(1, -2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = 1;
+                        to_Y = -2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(1);
+                    rot = 1;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = -1;
+                    }
+                    else if (move_check(-1, 1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = -1;
+                        to_Y = 1;
+                    }
+                    else if (move_check(0, -2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = -2;
+                    }
+                    else if (move_check(-1, -2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = -1;
+                        to_Y = -2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+            else if (test.rot == 1) {
+                if (lr == -1) {
+                    test.set_rot(0);
+                    rot = 0;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = 1;
+                    }
+                    else if (move_check(1, -1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = 1;
+                        to_Y = -1;
+                    }
+                    else if (move_check(0, 2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = 2;
+                    }
+                    else if (move_check(1, 2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = 1;
+                        to_Y = 2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(2);
+                    rot = 2;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = 1;
+                    }
+                    else if (move_check(1, -1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = 1;
+                        to_Y = -1;
+                    }
+                    else if (move_check(0, 2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = 2;
+                    }
+                    else if (move_check(1, 2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = 1;
+                        to_Y = 2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+            else if (test.rot == 2) {
+                if (lr == -1) {
+                    test.set_rot(1);
+                    rot = 1;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = -1;
+                    }
+                    else if (move_check(-1, 1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = -1;
+                        to_Y = 1;
+                    }
+                    else if (move_check(0, -2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = -2;
+                    }
+                    else if (move_check(-1, -2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = -1;
+                        to_Y = -2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(3);
+                    rot = 3;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = 1;
+                    }
+                    else if (move_check(1, 1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = 1;
+                        to_Y = 1;
+                    }
+                    else if (move_check(0, -2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = -2;
+                    }
+                    else if (move_check(1, -2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = 1;
+                        to_Y = -2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+            else if (test.rot == 3) {
+                if (lr == -1) {
+                    test.set_rot(2);
+                    rot = 2;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = -1;
+                    }
+                    else if (move_check(-1, -1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = -1;
+                        to_Y = -1;
+                    }
+                    else if (move_check(0, 2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = 2;
+                    }
+                    else if (move_check(-1, 2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = -1;
+                        to_Y = 2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+                else if (lr == 1) {
+                    test.set_rot(0);
+                    rot = 0;
+                    if (move_check(0, 0, test, ggc)) {
+                        SRS_kind = 0;
+                    }
+                    else if (move_check(-1, 0, test, ggc)) {
+                        SRS_kind = 1;
+                        to_X = -1;
+                    }
+                    else if (move_check(-1, -1, test, ggc)) {
+                        SRS_kind = 2;
+                        to_X = -1;
+                        to_Y = -1;
+                    }
+                    else if (move_check(0, 2, test, ggc)) {
+                        SRS_kind = 3;
+                        to_Y = 2;
+                    }
+                    else if (move_check(-1, 2, test, ggc)) {
+                        SRS_kind = 4;
+                        to_X = -1;
+                        to_Y = 2;
+                    }
+                    else {
+                        SRS_kind = -1;
+                        can = false;
+                    }
+                }
+            }
+        }
+
+        if (can) {
+            ggc.TS_kind = TS_check(to_X, to_Y, test, ggc);
+            now.set_rot(rot);
+            now.addX(to_X);
+            now.addY(to_Y);
+        }
+        return can;
+
+    }
+
     int shigune_AI::TS_check(int toX, int toY, tetri& ts) {
         if (ts.id != 6) {
             TS_kind = 0;
@@ -1514,6 +2340,59 @@ namespace shig {
         return TS_kind;
     }
 
+    int shigune_AI::TS_check(int toX, int toY, tetri& ts, game_container& ggc) {
+        if (ts.id != 6) {
+            ggc.TS_kind = 0;
+            return 0;
+        }
+
+        int ts_cnt = 0, size = ts.px_size, rot = ts.rot;
+        VI testX = { 0, 0, 2, 2 }, testY = { 0, 2, 0, 2 };
+        pairI2 check = { 0, 0 };
+
+        shig_rep(i, 4) {
+            int sX = ts.X + testX[i] + toX;
+            if (sX < 0 || sX >= 10) {
+                ts_cnt++;
+                continue;
+            }
+            int sY = ts.Y - testY[i] + toY - 1;
+            if (sY < 0 || sY >= (ggc.field_AI.size() - 1)) {
+                ts_cnt++;
+                continue;
+            }
+            if (ggc.field_AI[sY][sX] != 0)ts_cnt++;
+            else check = { testX[i], testY[i] };
+        }
+
+        if (ts_cnt == 3 && SRS_kind != 4) {
+            if (rot == 0) {
+                if (check.first == 0 && check.second == 0)ggc.TS_kind = 2;
+                else if (check.first == 2 && check.second == 0)ggc.TS_kind = 2;
+                else ggc.TS_kind = 1;
+            }
+            else if (rot == 1) {
+                if (check.first == 2 && check.second == 0)ggc.TS_kind = 2;
+                else if (check.first == 2 && check.second == 2)ggc.TS_kind = 2;
+                else ggc.TS_kind = 1;
+            }
+            else if (rot == 2) {
+                if (check.first == 2 && check.second == 2)ggc.TS_kind = 2;
+                else if (check.first == 0 && check.second == 2)ggc.TS_kind = 2;
+                else ggc.TS_kind = 1;
+            }
+            else if (rot == 3) {
+                if (check.first == 0 && check.second == 2)ggc.TS_kind = 2;
+                else if (check.first == 0 && check.second == 0)ggc.TS_kind = 2;
+                else ggc.TS_kind = 1;
+            }
+        }
+        else if (ts_cnt == 3 || ts_cnt == 4)ggc.TS_kind = 1;//normal
+        else ggc.TS_kind = 0;
+
+        return ggc.TS_kind;
+    }
+
     set<int> shigune_AI::erase_check_AI(tetri& s_now) {
         set<int> erase_itr;
         p_field_AI = field_AI;
@@ -1529,6 +2408,28 @@ namespace shig {
             if (sY < 0 || sY >= 44)continue;
             shig_rep(j, pW) {
                 if (p_field_AI[sY][j] != 0) cnt++;
+                else break;
+            }
+            if (cnt == pW) erase_itr.insert(sY);
+        }
+        return erase_itr;
+    }
+
+    set<int> shigune_AI::erase_check_AI(tetri& s_now, game_container& gce) {
+        set<int> erase_itr;
+        gce.p_field_AI = gce.field_AI;
+        shigune_AI::apply_mino(gce.p_field_AI, s_now);
+        int rot = s_now.rot;
+        int size = s_now.px_size;
+        int H = s_now.mino[rot].size();
+        int pW = gce.p_field_AI[0].size();
+
+        shig_rep(i, H) {
+            int sY = s_now.Y - i - 1;
+            int cnt = 0;
+            if (sY < 0 || sY >= fh - 1)continue;
+            shig_rep(j, pW) {
+                if (gce.p_field_AI[sY][j] != 0) cnt++;
                 else break;
             }
             if (cnt == pW) erase_itr.insert(sY);
@@ -1598,6 +2499,57 @@ namespace shig {
         else if (s_action == 7) {
             int sft = 1;
             if (move_check(sft, 0, m_now)) {
+                m_now.addX(sft);
+                return true;
+            }
+            else return false;
+        }
+        return true;
+    }
+
+    bool shigune_AI::move_mino(tetri& m_now, int s_action, game_container& ggc) {
+        int size = m_now.px_size;
+        if (s_action == 1) {
+            if (ggc.hold_AI == 0) {
+                m_now.minset(q_next_AI.front());
+            }
+            else {
+                m_now.minset(hold_AI);
+            }
+            return true;
+        }
+        else if (s_action == 2) {
+            int sft = -1;
+            if (move_check(0, sft, m_now, ggc)) {
+                m_now.addY(sft);
+                return true;
+            }
+            else return false;
+        }
+        else if (s_action == 3) {
+            int sft = -1;
+            while (move_check(0, sft, m_now, ggc)) {
+                m_now.addY(sft);
+            }
+            return true;
+        }
+        else if (s_action == 4) {
+            return SRS_check(-1, m_now, ggc);
+        }
+        else if (s_action == 5) {
+            return SRS_check(1, m_now, ggc);
+        }
+        else if (s_action == 6) {
+            int sft = -1;
+            if (move_check(sft, 0, m_now, ggc)) {
+                m_now.addX(sft);
+                return true;
+            }
+            else return false;
+        }
+        else if (s_action == 7) {
+            int sft = 1;
+            if (move_check(sft, 0, m_now, ggc)) {
                 m_now.addX(sft);
                 return true;
             }
@@ -1766,6 +2718,36 @@ namespace shig {
         return true;
     }
 
+    bool shigune_AI::ttrp_check(cmd_pattern& slc, int& sle, VI& mnL, game_container& gct) {
+
+        if (!gct.ttrp_able)return true;
+
+        if (slc.ttrp_f > 0) {
+            gct.now_ttrp.mino_check[slc.ttrp_f - 1LL] = true;
+            int mchk_cnt = 0;
+            shig_rep(i, gct.now_ttrp.mino_num) {
+                if (gct.now_ttrp.mino_check[i] == true) {
+                    mchk_cnt++;
+                }
+            }
+            if (mchk_cnt >= gct.now_ttrp.mino_num) {
+                gct.ttrp_able = false;
+            }
+        }
+        else {
+            ttrp_able = false;
+        }
+
+        if (ttrp_able) {
+            ttrp_ofsY += sle;
+        }
+        else {
+            ttrp_ofsY = 0;
+        }
+
+        return true;
+    }
+
     bool shigune_AI::next_crr_check() {
 
         set<int> all_chk;
@@ -1839,7 +2821,7 @@ namespace shig {
         
         set<int> itr;
         gcp.p_field_AI = gcp.field_AI;
-        shigune_AI::apply_mino(p_field_AI, ct.pat);
+        shigune_AI::apply_mino(gcp.p_field_AI, ct.pat);
         int rot = ct.pat.rot, size = ct.pat.px_size, H = ct.pat.mino[rot].size(), pW = p_field_AI[0].size();
 
         shig_rep(i, H) {
@@ -1847,11 +2829,13 @@ namespace shig {
             int cnt = 0;
             if (sY < 0 || sY >= 44)continue;
             shig_rep(j, pW) {
-                if (p_field_AI[sY][j] != 0) cnt++;
+                if (gcp.p_field_AI[sY][j] != 0) cnt++;
                 else break;
             }
             if (cnt == pW) itr.insert(sY);
         }
+
+        int itr_s = itr.size();
 
         const VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
         VVI proxy(0); proxy.reserve(45);
@@ -1864,28 +2848,22 @@ namespace shig {
 
         gcp.field_AI = proxy;
 
-        if (ct.cmd_list.at(0) == 1) {
-            gcp.hold_AI = gcp.current_AI;
-            gcp.current_AI = gcp.next_AI.front();
+        if (ct.cmd_list.at(0) == 1) gcp.hold_AI = gcp.current_AI;
+        gcp.current_AI = gcp.next_AI.front();
+        gcp.q_next_AI.pop();  gcp.next_AI.clear();
+        while (!gcp.q_next_AI.empty()) {
+            int q = gcp.q_next_AI.front();
+            gcp.next_AI.push_back(q);
             gcp.q_next_AI.pop();
-            gcp.next_AI.clear();
-            while (!gcp.q_next_AI.empty()) {
-                int q = gcp.q_next_AI.front();
-                next_AI.push_back(q);
-                gcp.q_next_AI.pop();
-            }
-        }
-        else {
-            gcp.q_next_AI.pop();
-            gcp.next_AI.clear();
-            while (!gcp.q_next_AI.empty()) {
-                int q = gcp.q_next_AI.front();
-                next_AI.push_back(q);
-                gcp.q_next_AI.pop();
-            }
         }
 
-
+        VI mnL(8, 8);
+        mnL[current_AI] = 0;
+        mnL[hold_AI] = -1;
+        shig_rep(i, min({ 5, (int)next_AI.size() })) {
+            mnL[next_AI[i]] = i + 1;
+        }
+        shigune_AI::ttrp_check(ct, itr_s, mnL, gcp);
 
         return gcp;
     }

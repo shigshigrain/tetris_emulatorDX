@@ -399,7 +399,7 @@ namespace shig {
 		VI cmd_list;
 		set<cmd_pattern> cp;
 		vector<cmd_pattern> cv;
-		tetriplate slc_ttrp;
+		tetriplate now_ttrp;
 		vector<cmd_pattern> ec;
 	public:
 		game_container();
@@ -464,15 +464,21 @@ namespace shig {
 		bool pc_check();
 		void bgn_strategy();
 		void search_way();
-		void search_way(game_container gc, vector<pair<cmd_pattern, int>>& pcv);
+		void search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv);
 		cmd_pattern explore_choices(const game_container &gc_org);
 		void get_score(cmd_pattern& cd);
+		void get_score(cmd_pattern& cd, game_container& gcs);
 		bool move_check(int to_x, int to_y, tetri& s_check);
+		bool move_check(int to_x, int to_y, tetri& s_check, game_container& ggc);
 		bool SRS_check(int lr, tetri& s_now);
+		bool SRS_check(int lr, tetri& s_now, game_container& ggc);
 		int TS_check(int toX, int toY, tetri& ts);
+		int TS_check(int toX, int toY, tetri& ts, game_container& ggc);
 		set<int> erase_check_AI(tetri& s_now);
+		set<int> erase_check_AI(tetri& s_now, game_container& gce);
 		void apply_mino(VVI& c_field, tetri& s_now);
 		bool move_mino(tetri& m_now, int s_action);
+		bool move_mino(tetri& m_now, int s_action, game_container& ggc);
 		void print_gh(tetri& s_now);
 		void move_itr(int lr);
 		VVI get_AI_field(int p, int m);
@@ -481,6 +487,7 @@ namespace shig {
 		bool load_ttrp();
 		bool ttrp_crr(tetri& now_p, int& size_l);
 		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL);
+		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL, game_container& gct);
 		bool next_crr_check();
 		bool set_gc(game_container &gc);
 		game_container update_gc(cmd_pattern& ct, game_container pre_gc);
