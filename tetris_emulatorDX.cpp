@@ -1,5 +1,7 @@
 ﻿// tetris_emulatorDX.cpp : アプリケーションのエントリ ポイントを定義します。
-//
+// v.3.5.0_new_explore
+
+
 #include "tetris_emulatorDX.h"
 //using namespace DxLib;
 //using namespace shig;
