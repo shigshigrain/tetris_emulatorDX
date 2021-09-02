@@ -465,7 +465,7 @@ namespace shig {
 		void bgn_strategy();
 		void search_way();
 		void search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv);
-		cmd_pattern explore_choices(const game_container &gc_org);
+		cmd_pattern explore_choices(game_container &gc_org);
 		void get_score(cmd_pattern& cd);
 		void get_score(cmd_pattern& cd, game_container& gcs);
 		bool move_check(int to_x, int to_y, tetri& s_check);

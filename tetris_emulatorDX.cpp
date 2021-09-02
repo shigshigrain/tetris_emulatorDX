@@ -232,7 +232,7 @@ void show_field(int flag) {
 }
 
 void show_field_AI(int flag, shig::shigune_AI &ai) {
-    VVI s_field = ai.get_AI_field(1, 1);
+    //VVI s_field = ai.get_AI_field(1, 1);
 
     ClearDrawScreen();//裏画面消す
     SetDrawScreen(DX_SCREEN_BACK);
@@ -300,10 +300,13 @@ void show_field_AI(int flag, shig::shigune_AI &ai) {
 
     unsigned int Color = GetColor(0, 0, 0);
     
+    /*
     VI list = ai.get_AI_cmd();
     shig_rep(i, list.size()) {
         DrawFormatString(650, 50 + i * 20, Color, "%d", list[i]);
     }
+    */
+    
 
     pair<int, string> sttrp = ai.get_sttrp_name();
     DrawFormatString(20, 620, Color, "%s", "id: name:");
