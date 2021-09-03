@@ -377,6 +377,7 @@ namespace shig {
 	public:
 		//private:
 		int slot_id;
+		LL pre_score;
 		int hold_AI;
 		int current_AI;
 		int pc_cnt;

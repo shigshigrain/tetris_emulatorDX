@@ -16,6 +16,7 @@ namespace shig {
     game_container::game_container() {
 
         slot_id = 0;
+        pre_score = 0;
         hold_AI = 0;
         current_AI = 0;
         next_AI = VI(0);
@@ -165,10 +166,9 @@ namespace shig {
         now_ttrp.set_id_list(zv);
         vector<pairI2> zp(0, make_pair(0, 0));
         now_ttrp.set_terms(zp);
+
         gc_slot = vector<game_container>(branch_num);
-
         now_gc = game_container();
-
         null_tetri.minset(6);
         null_cmd.pat.minset(6);
 
@@ -492,7 +492,7 @@ namespace shig {
         VVI search_tree(mxm, rsv);
         VI parent_tree(mxm, 0);
         int to = 0, parent = 0;
-        gc.cp.clear(); //gc.cv.clear();
+        gc.cp.clear(); gc.cv.clear();
 
         shig_rep(i, base_cmd.size()) {
             search_tree[i] = base_cmd[i];
@@ -522,14 +522,14 @@ namespace shig {
                 while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
                 move_mino(test, 3, gc);
                 cmd_pattern c(test, search_tree[w], parent_tree[w]);
-                decltype(cp)::iterator it = cp.find(c);
-                if (it != cp.end()) {
+                decltype(gc.cp)::iterator it = gc.cp.find(c);
+                if (it != gc.cp.end()) {
                     w++;
                     continue;
                 }
                 get_score(c, gc);
                 pcv.push_back(make_pair(c, gc.slot_id));
-                cp.insert(c);
+                gc.cp.insert(c);
                 VI w_sft = search_tree[w];
                 w_sft.pop_back();
                 shig_rep(i, hd_cnt)w_sft.push_back(2);
@@ -556,10 +556,10 @@ namespace shig {
                         move_mino(test, 3, gc);
                         add_tree.push_back(3);
                         cmd_pattern c(test, add_tree, w);
-                        decltype(cp)::iterator it = cp.find(c);
-                        if (it != cp.end()) continue;
+                        decltype(gc.cp)::iterator it = gc.cp.find(c);
+                        if (it != gc.cp.end()) continue;
                         get_score(c, gc);
-                        cp.insert(c);
+                        gc.cp.insert(c);
                         add_tree.pop_back();
                         pcv.push_back(make_pair(c, gc.slot_id));
                         shig_rep(i, hd_cnt)add_tree.push_back(2);
@@ -618,19 +618,31 @@ namespace shig {
             shig_rep(i, branch_num) search_way(gc_slot.at(i), catalog);
             sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
             vector<game_container> proxy_slot(branch_num);
+            vector<vector<cmd_pattern>> proxy_branch(branch_num, vector<cmd_pattern>(0));
             shig_rep(i, branch_num) {
-                auto [pct, ci] = catalog.at(i);
-                branch.at(i).push_back(pct);
-                proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
-                proxy_slot.at(i).slot_id = i;
+                if (catalog.size() <= i || catalog.size() == 0) {
+                    branch.at(i).push_back(null_cmd);
+                    proxy_slot.at(i) = update_gc(null_cmd, gc_slot.at(0));
+                    proxy_slot.at(i).slot_id = i;
+                }
+                else {
+                    auto [pct, ci] = catalog.at(i);
+                    proxy_branch.at(i) = branch.at(ci);
+                    proxy_branch.at(i).push_back(pct);
+                    proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
+                    proxy_slot.at(i).slot_id = i;
+                }
+                
             }
             gc_slot = proxy_slot;
+            branch = proxy_branch;
 
         }
 
         if (catalog.size() == 0)return null_cmd;
         auto [r, ri] = catalog.at(0);
-        return r;
+        
+        return branch.at(ri).front();
 
 
     }
@@ -1253,6 +1265,8 @@ namespace shig {
 
         contact *= 50;
         cd.update(contact);
+
+        cd.update(gcs.pre_score);
 
         return;
     }
@@ -2881,12 +2895,14 @@ namespace shig {
         
 
         VI mnL(8, 8);
-        mnL[current_AI] = 0;
-        mnL[hold_AI] = -1;
-        shig_rep(i, min({ 5, (int)next_AI.size() })) {
-            mnL[next_AI[i]] = i + 1;
+        mnL[gcp.current_AI] = 0;
+        mnL[gcp.hold_AI] = -1;
+        shig_rep(i, min({ 5, (int)gcp.next_AI.size() })) {
+            mnL[gcp.next_AI[i]] = i + 1;
         }
         shigune_AI::ttrp_check(ct, itr_s, mnL, gcp);
+
+        gcp.pre_score += ct.score;
 
         return gcp;
     }

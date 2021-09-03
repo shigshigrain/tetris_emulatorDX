@@ -203,6 +203,12 @@
     <None Include="template\data\BstdR_1-1.ttrp" />
     <None Include="template\data\BstdR_1-2.ttrp" />
     <None Include="template\data\BstdR_1-3.ttrp" />
+    <None Include="template\data\gamusiroS_1-1.ttrp" />
+    <None Include="template\data\gamusiroS_2-1.ttrp" />
+    <None Include="template\data\gamusiroS_2-3.ttrp" />
+    <None Include="template\data\gamusiroZ_1-1.ttrp" />
+    <None Include="template\data\gamusiroZ_2-1.ttrp" />
+    <None Include="template\data\gamusiroZ_2-2.ttrp" />
     <None Include="template\data\hotcakeS_1-1.ttrp" />
     <None Include="template\data\hotcakeS_2-1.ttrp" />
     <None Include="template\data\hotcakeS_2-2.ttrp" />

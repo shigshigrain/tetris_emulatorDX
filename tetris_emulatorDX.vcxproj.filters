@@ -129,5 +129,11 @@
     <None Include="template\data\hotcakeZ_1-1.ttrp" />
     <None Include="template\data\hotcakeZ_2-1.ttrp" />
     <None Include="template\data\hotcakeZ_2-2.ttrp" />
+    <None Include="template\data\gamusiroS_1-1.ttrp" />
+    <None Include="template\data\gamusiroS_2-1.ttrp" />
+    <None Include="template\data\gamusiroS_2-3.ttrp" />
+    <None Include="template\data\gamusiroZ_1-1.ttrp" />
+    <None Include="template\data\gamusiroZ_2-1.ttrp" />
+    <None Include="template\data\gamusiroZ_2-2.ttrp" />
   </ItemGroup>
 </Project>
