@@ -5,8 +5,7 @@ int i32_one = 1;
 int i32_minus_one = -1;
 const int branch_num = 5;
 const int fh = 45;
-tetri null_tetri(0, 0, 0, 0);
-cmd_pattern null_cmd(null_tetri, { 3 }, -1);
+
 
 //using namespace shig;
 
@@ -17,6 +16,7 @@ namespace shig {
     game_container::game_container() {
 
         slot_id = 0;
+        pre_score = 0;
         hold_AI = 0;
         current_AI = 0;
         next_AI = VI(0);
@@ -120,7 +120,10 @@ namespace shig {
 
 	tetri t(0, 3, 21, 0);
     tetriplate now_ttrp;
-    
+    tetri null_tetri(0, 0, 0, 0);
+    cmd_pattern null_cmd(null_tetri, { 3 }, -1);
+
+
 
 	shigune_AI::shigune_AI(int ii) {
         identifier = ii;
@@ -163,9 +166,13 @@ namespace shig {
         now_ttrp.set_id_list(zv);
         vector<pairI2> zp(0, make_pair(0, 0));
         now_ttrp.set_terms(zp);
-        gc_slot = vector<game_container>(branch_num);
 
+        gc_slot = vector<game_container>(branch_num);
         now_gc = game_container();
+        null_tetri.minset(6);
+        null_cmd.pat.minset(6);
+
+
 	}
 
 
@@ -177,15 +184,18 @@ namespace shig {
 
         set_gc(now_gc);
 
-        //cmd_pattern select = explore_choices(now_gc); Vƒ‹[ƒv’Tõ
-        search_way(); // ‹ŒˆêŽè’Tõ
+        cmd_pattern select = explore_choices(now_gc); //Vƒ‹[ƒv’Tõ
+        //search_way(); // ‹ŒˆêŽè’Tõ
         
+        /*
         if (cp.size() == 0)return VI({3});
         sort(cv.begin(), cv.end(), [&](cmd_pattern const& l, cmd_pattern const& r) {return l.score > r.score; });
 
         cmd_pattern select = cv.front();
+        */
+        
         set<int> el = erase_check_AI(select.pat);
-        int els = el.size();
+        int els = el.size(); 
         
 
         VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
@@ -221,7 +231,7 @@ namespace shig {
        VI cmd = d.cmd_list;
        */
 
-		return cv[0].cmd_list;
+		return select.cmd_list;
 	}
 
 
@@ -476,12 +486,13 @@ namespace shig {
     void shigune_AI::search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv) {
         
         constexpr int mxm = 400;
+        if (gc.current_AI == 0)return;
         gc.p_field_AI = gc.field_AI;
         VI rsv(0); rsv.reserve(30);
         VVI search_tree(mxm, rsv);
         VI parent_tree(mxm, 0);
         int to = 0, parent = 0;
-        gc.cp.clear(); //gc.cv.clear();
+        gc.cp.clear(); gc.cv.clear();
 
         shig_rep(i, base_cmd.size()) {
             search_tree[i] = base_cmd[i];
@@ -494,9 +505,9 @@ namespace shig {
             bool can = true;
             int w_size = search_tree[w].size();
 
-            tetri test; test.minset(gc.current_AI);
+            tetri test;
             if (parent_tree[w] == w) {
-                test = get_current();
+                test.minset(gc.current_AI);
                 shig_rep(i, search_tree[w].size() - 1) {
                     if (!move_mino(test, search_tree[w][i], gc)) {
                         can = false;
@@ -511,14 +522,14 @@ namespace shig {
                 while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
                 move_mino(test, 3, gc);
                 cmd_pattern c(test, search_tree[w], parent_tree[w]);
-                decltype(cp)::iterator it = cp.find(c);
-                if (it != cp.end()) {
+                decltype(gc.cp)::iterator it = gc.cp.find(c);
+                if (it != gc.cp.end()) {
                     w++;
                     continue;
                 }
                 get_score(c, gc);
                 pcv.push_back(make_pair(c, gc.slot_id));
-                cp.insert(c);
+                gc.cp.insert(c);
                 VI w_sft = search_tree[w];
                 w_sft.pop_back();
                 shig_rep(i, hd_cnt)w_sft.push_back(2);
@@ -529,7 +540,7 @@ namespace shig {
                 if (search_tree[w].back() != 3) {
                     const VI test_case = { 6, 7, 4, 5 };
                     shig_rep(h, test_case.size()) {
-                        test = get_current();
+                        test.minset(gc.current_AI);
                         can = true;
                         VI add_tree = search_tree[w];
                         add_tree.push_back(test_case[h]);
@@ -545,10 +556,10 @@ namespace shig {
                         move_mino(test, 3, gc);
                         add_tree.push_back(3);
                         cmd_pattern c(test, add_tree, w);
-                        decltype(cp)::iterator it = cp.find(c);
-                        if (it != cp.end()) continue;
+                        decltype(gc.cp)::iterator it = gc.cp.find(c);
+                        if (it != gc.cp.end()) continue;
                         get_score(c, gc);
-                        cp.insert(c);
+                        gc.cp.insert(c);
                         add_tree.pop_back();
                         pcv.push_back(make_pair(c, gc.slot_id));
                         shig_rep(i, hd_cnt)add_tree.push_back(2);
@@ -572,7 +583,7 @@ namespace shig {
 
     }
 
-    cmd_pattern shigune_AI::explore_choices(const game_container& gc_org) {
+    cmd_pattern shigune_AI::explore_choices(game_container& gc_org) {
 
         vector<vector<cmd_pattern>> branch(branch_num, vector<cmd_pattern>(0));
         vector<pair<cmd_pattern, int>> catalog(0);
@@ -581,44 +592,57 @@ namespace shig {
 
         cp.clear(); cv.clear();
         catalog.clear();
-        search_way(now_gc, catalog);
+        search_way(gc_org, catalog);
 
         sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
 
-        if (cv.size() == 0) {
+        if (catalog.size() == 0) {
             return null_cmd;
         }
-        else if (cv.size() < branch_num && cv.size() > 0) {
-            return cv.front();
+        else if (catalog.size() < branch_num && catalog.size() > 0) {
+            auto [ccv, ic] = catalog.front();
+            return ccv;
         }
         else {
             shig_rep(i, branch_num) {
-                branch.at(i).push_back(cv.at(i));
                 auto [pct, ci] = catalog.at(i);
-                gc_slot.at(i) = update_gc(pct, now_gc);
+                branch.at(i).push_back(pct);
+                gc_slot.at(i) = update_gc(pct, gc_org);
                 gc_slot.at(i).slot_id = i;
             }
         }
 
         shig_rep(n, exp_cyc_lim - 1) {
-            catalog.clear(); catalog.reserve(600);
+            catalog.clear(); catalog.reserve(700);
 
             shig_rep(i, branch_num) search_way(gc_slot.at(i), catalog);
             sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
             vector<game_container> proxy_slot(branch_num);
+            vector<vector<cmd_pattern>> proxy_branch(branch_num, vector<cmd_pattern>(0));
             shig_rep(i, branch_num) {
-                branch.at(i).push_back(cv.at(i));
-                auto [pct, ci] = catalog.at(i);
-                proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
-                proxy_slot.at(i).slot_id = i;
+                if (catalog.size() <= i || catalog.size() == 0) {
+                    branch.at(i).push_back(null_cmd);
+                    proxy_slot.at(i) = update_gc(null_cmd, gc_slot.at(0));
+                    proxy_slot.at(i).slot_id = i;
+                }
+                else {
+                    auto [pct, ci] = catalog.at(i);
+                    proxy_branch.at(i) = branch.at(ci);
+                    proxy_branch.at(i).push_back(pct);
+                    proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
+                    proxy_slot.at(i).slot_id = i;
+                }
+                
             }
             gc_slot = proxy_slot;
+            branch = proxy_branch;
 
         }
 
         if (catalog.size() == 0)return null_cmd;
         auto [r, ri] = catalog.at(0);
-        return r;
+        
+        return branch.at(ri).front();
 
 
     }
@@ -1242,6 +1266,8 @@ namespace shig {
         contact *= 50;
         cd.update(contact);
 
+        cd.update(gcs.pre_score);
+
         return;
     }
 
@@ -1277,7 +1303,7 @@ namespace shig {
                     int sX = s_check.X + j + to_x;
                     if (sX < 0 || sX >= 10)break;
                     int sY = s_check.Y - i + to_y;
-                    if (sY <= 0 || sY >= (field_AI.size() - 1))break;
+                    if (sY <= 0 || sY >= (ggc.field_AI.size() - 1))break;
                     if (ggc.field_AI[sY - 1LL][sX] == 0)cnt++;
                 }
             }
@@ -1796,28 +1822,28 @@ namespace shig {
                     test.set_rot(3);
                     rot = 3;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = -1;
                     }
                     else if (move_check(2, 0, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = 2;
                     }
                     else if (move_check(-1, 2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_X = -1;
                         to_Y = 2;
                     }
                     else if (move_check(2, -1, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = 2;
                         to_Y = -1;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -1825,28 +1851,28 @@ namespace shig {
                     test.set_rot(1);
                     rot = 1;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-2, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = -2;
                     }
                     else if (move_check(1, 0, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = 1;
                     }
                     else if (move_check(-2, -1, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_X = -2;
                         to_Y = -1;
                     }
                     else if (move_check(1, 2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = 1;
                         to_Y = 2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -1856,28 +1882,28 @@ namespace shig {
                     test.set_rot(0);
                     rot = 0;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(2, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = 2;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = -1;
                     }
                     else if (move_check(2, 1, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_X = 2;
                         to_Y = 1;
                     }
                     else if (move_check(-1, -2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = -1;
                         to_Y = -2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -1885,26 +1911,28 @@ namespace shig {
                     test.set_rot(2);
                     rot = 2;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = -1;
                     }
                     else if (move_check(2, 0, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = 2;
                     }
                     else if (move_check(-1, 2, test, ggc)) {
+                        ggc.SRS_kind = 3;
                         to_X = -1;
                         to_Y = 2;
                     }
                     else if (move_check(2, -1, test, ggc)) {
+                        ggc.SRS_kind = 4;
                         to_X = 2;
                         to_Y = -1;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -1914,28 +1942,28 @@ namespace shig {
                     test.set_rot(1);
                     rot = 1;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(1, 0, test, ggc)) {
                         to_X = 1;
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                     }
                     else if (move_check(-2, 0, test, ggc)) {
                         to_X = -2;
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                     }
                     else if (move_check(1, -2, test, ggc)) {
                         to_X = 1;
                         to_Y = -2;
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                     }
                     else if (move_check(-2, 1, test, ggc)) {
                         to_X = -2;
                         to_Y = 1;
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -1943,28 +1971,28 @@ namespace shig {
                     test.set_rot(3);
                     rot = 3;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(2, 0, test, ggc)) {
                         to_X = 2;
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
                         to_X = -1;
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                     }
                     else if (move_check(2, 1, test, ggc)) {
                         to_X = 2;
                         to_Y = 1;
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                     }
                     else if (move_check(-1, -2, test, ggc)) {
                         to_X = -1;
                         to_Y = -2;
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -1974,28 +2002,28 @@ namespace shig {
                     test.set_rot(2);
                     rot = 2;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-2, 0, test, ggc)) {
                         to_X = -2;
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                     }
                     else if (move_check(1, 0, test, ggc)) {
                         to_X = 1;
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                     }
                     else if (move_check(-2, -1, test, ggc)) {
                         to_X = -2;
                         to_Y = -1;
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                     }
                     else if (move_check(1, 2, test, ggc)) {
                         to_X = 1;
                         to_Y = 2;
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2003,28 +2031,28 @@ namespace shig {
                     test.set_rot(0);
                     rot = 0;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(1, 0, test, ggc)) {
                         to_X = 1;
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                     }
                     else if (move_check(-2, 0, test, ggc)) {
                         to_X = -2;
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                     }
                     else if (move_check(1, -2, test, ggc)) {
                         to_X = 1;
                         to_Y = -2;
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                     }
                     else if (move_check(-2, 1, test, ggc)) {
                         to_X = -2;
                         to_Y = 1;
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2036,28 +2064,28 @@ namespace shig {
                     test.set_rot(3);
                     rot = 3;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = 1;
                     }
                     else if (move_check(1, 1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = 1;
                         to_Y = 1;
                     }
                     else if (move_check(0, -2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = -2;
                     }
                     else if (move_check(1, -2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = 1;
                         to_Y = -2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2065,28 +2093,28 @@ namespace shig {
                     test.set_rot(1);
                     rot = 1;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = -1;
                     }
                     else if (move_check(-1, 1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = -1;
                         to_Y = 1;
                     }
                     else if (move_check(0, -2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = -2;
                     }
                     else if (move_check(-1, -2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = -1;
                         to_Y = -2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2096,28 +2124,28 @@ namespace shig {
                     test.set_rot(0);
                     rot = 0;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = 1;
                     }
                     else if (move_check(1, -1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = 1;
                         to_Y = -1;
                     }
                     else if (move_check(0, 2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = 2;
                     }
                     else if (move_check(1, 2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = 1;
                         to_Y = 2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2125,28 +2153,28 @@ namespace shig {
                     test.set_rot(2);
                     rot = 2;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = 1;
                     }
                     else if (move_check(1, -1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = 1;
                         to_Y = -1;
                     }
                     else if (move_check(0, 2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = 2;
                     }
                     else if (move_check(1, 2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = 1;
                         to_Y = 2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2156,28 +2184,28 @@ namespace shig {
                     test.set_rot(1);
                     rot = 1;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = -1;
                     }
                     else if (move_check(-1, 1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = -1;
                         to_Y = 1;
                     }
                     else if (move_check(0, -2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = -2;
                     }
                     else if (move_check(-1, -2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = -1;
                         to_Y = -2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2185,28 +2213,28 @@ namespace shig {
                     test.set_rot(3);
                     rot = 3;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = 1;
                     }
                     else if (move_check(1, 1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = 1;
                         to_Y = 1;
                     }
                     else if (move_check(0, -2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = -2;
                     }
                     else if (move_check(1, -2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = 1;
                         to_Y = -2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2216,28 +2244,28 @@ namespace shig {
                     test.set_rot(2);
                     rot = 2;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = -1;
                     }
                     else if (move_check(-1, -1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = -1;
                         to_Y = -1;
                     }
                     else if (move_check(0, 2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = 2;
                     }
                     else if (move_check(-1, 2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = -1;
                         to_Y = 2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2245,28 +2273,28 @@ namespace shig {
                     test.set_rot(0);
                     rot = 0;
                     if (move_check(0, 0, test, ggc)) {
-                        SRS_kind = 0;
+                        ggc.SRS_kind = 0;
                     }
                     else if (move_check(-1, 0, test, ggc)) {
-                        SRS_kind = 1;
+                        ggc.SRS_kind = 1;
                         to_X = -1;
                     }
                     else if (move_check(-1, -1, test, ggc)) {
-                        SRS_kind = 2;
+                        ggc.SRS_kind = 2;
                         to_X = -1;
                         to_Y = -1;
                     }
                     else if (move_check(0, 2, test, ggc)) {
-                        SRS_kind = 3;
+                        ggc.SRS_kind = 3;
                         to_Y = 2;
                     }
                     else if (move_check(-1, 2, test, ggc)) {
-                        SRS_kind = 4;
+                        ggc.SRS_kind = 4;
                         to_X = -1;
                         to_Y = 2;
                     }
                     else {
-                        SRS_kind = -1;
+                        ggc.SRS_kind = -1;
                         can = false;
                     }
                 }
@@ -2511,10 +2539,10 @@ namespace shig {
         int size = m_now.px_size;
         if (s_action == 1) {
             if (ggc.hold_AI == 0) {
-                m_now.minset(q_next_AI.front());
+                m_now.minset(ggc.q_next_AI.front());
             }
             else {
-                m_now.minset(hold_AI);
+                m_now.minset(ggc.hold_AI);
             }
             return true;
         }
@@ -2842,28 +2870,39 @@ namespace shig {
 
         shig_rep(i, fh) {
             decltype(itr)::iterator it = itr.find(i);
-            if (it == itr.end()) proxy.push_back(gcp.field_AI[i]);
+            if (it == itr.end()) proxy.push_back(gcp.p_field_AI[i]);
         }
         while (proxy.size() < fh) proxy.push_back(empty);
 
         gcp.field_AI = proxy;
 
         if (ct.cmd_list.at(0) == 1) gcp.hold_AI = gcp.current_AI;
-        gcp.current_AI = gcp.next_AI.front();
-        gcp.q_next_AI.pop();  gcp.next_AI.clear();
-        while (!gcp.q_next_AI.empty()) {
-            int q = gcp.q_next_AI.front();
-            gcp.next_AI.push_back(q);
-            gcp.q_next_AI.pop();
+        if (gcp.q_next_AI.size() == 0) {
+            gcp.current_AI = 0;
         }
+        else {
+            gcp.current_AI = gcp.q_next_AI.front();
+            gcp.q_next_AI.pop();  gcp.next_AI.clear();
+            while (!gcp.q_next_AI.empty()) {
+                int q = gcp.q_next_AI.front();
+                gcp.next_AI.push_back(q);
+                gcp.q_next_AI.pop();
+            }
+            shig_rep(i, gcp.next_AI.size()) {
+                gcp.q_next_AI.push(gcp.next_AI.at(i));
+            }
+        }
+        
 
         VI mnL(8, 8);
-        mnL[current_AI] = 0;
-        mnL[hold_AI] = -1;
-        shig_rep(i, min({ 5, (int)next_AI.size() })) {
-            mnL[next_AI[i]] = i + 1;
+        mnL[gcp.current_AI] = 0;
+        mnL[gcp.hold_AI] = -1;
+        shig_rep(i, min({ 5, (int)gcp.next_AI.size() })) {
+            mnL[gcp.next_AI[i]] = i + 1;
         }
         shigune_AI::ttrp_check(ct, itr_s, mnL, gcp);
+
+        gcp.pre_score += ct.score;
 
         return gcp;
     }

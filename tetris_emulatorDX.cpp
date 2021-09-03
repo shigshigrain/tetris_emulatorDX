@@ -1,5 +1,7 @@
 ﻿// tetris_emulatorDX.cpp : アプリケーションのエントリ ポイントを定義します。
-//
+// v.3.5.0_new_explore
+
+
 #include "tetris_emulatorDX.h"
 //using namespace DxLib;
 //using namespace shig;
@@ -230,7 +232,7 @@ void show_field(int flag) {
 }
 
 void show_field_AI(int flag, shig::shigune_AI &ai) {
-    VVI s_field = ai.get_AI_field(1, 1);
+    //VVI s_field = ai.get_AI_field(1, 1);
 
     ClearDrawScreen();//裏画面消す
     SetDrawScreen(DX_SCREEN_BACK);
@@ -298,10 +300,13 @@ void show_field_AI(int flag, shig::shigune_AI &ai) {
 
     unsigned int Color = GetColor(0, 0, 0);
     
+    /*
     VI list = ai.get_AI_cmd();
     shig_rep(i, list.size()) {
         DrawFormatString(650, 50 + i * 20, Color, "%d", list[i]);
     }
+    */
+    
 
     pair<int, string> sttrp = ai.get_sttrp_name();
     DrawFormatString(20, 620, Color, "%s", "id: name:");
@@ -647,7 +652,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //*/
 
     Window window;
-    window.Create("tetris_emulator_ver3.0.7", "DXlib");
+    window.Create("tetris_emulator_ver3.4.9", "DXlib");
     SetUserWindow(window.GetHandle());
     SetUserWindowMessageProcessDXLibFlag(false);
     SetGraphMode(1200, 800, 32);
