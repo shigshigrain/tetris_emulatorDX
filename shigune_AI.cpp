@@ -2763,14 +2763,14 @@ namespace shig {
             }
         }
         else {
-            ttrp_able = false;
+            gct.ttrp_able = false;
         }
 
-        if (ttrp_able) {
-            ttrp_ofsY += sle;
+        if (gct.ttrp_able) {
+            gct.ttrp_ofsY += sle;
         }
         else {
-            ttrp_ofsY = 0;
+            gct.ttrp_ofsY = 0;
         }
 
         return true;
