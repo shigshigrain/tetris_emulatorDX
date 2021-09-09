@@ -1202,7 +1202,7 @@ namespace shig {
         }
 
 
-        LL ttrp_rate = 100000;
+        LL ttrp_rate = 10000000;
 
         bool chk_f = false;
         tetri ofs_cdp = cd.pat;
@@ -2811,26 +2811,32 @@ namespace shig {
         gi[8] = ttrp_size;
         gi[9] = ttrp_ofsY;
         gi[10] = 0;
-        if (!gc.set_gc_int(gi))return false;
+        //if (!gc.set_gc_int(gi))return false;
+        gc.set_gc_int(gi);
 
         vector<bool> gb(1);
         gb[0] = ttrp_able;
-        if (!gc.set_gc_bool(gb))return false;
-        
+        //if (!gc.set_gc_bool(gb))return false;
+        gc.set_gc_bool(gb);
 
         VVI gv(1, VI(0, 0));
         gv[0] = height;
-        if (!gc.set_gc_VI(gv))return false;
+        //if (!gc.set_gc_VI(gv))return false;
+        gc.set_gc_VI(gv);
 
-        if(!gc.set_gc_next(next_AI, q_next_AI))return false;
+        //if(!gc.set_gc_next(next_AI, q_next_AI))return false;
+        gc.set_gc_next(next_AI, q_next_AI);
 
         vector<VVI> gf(3, VVI(0, VI(0, 0)));
         gf[0] = field_AI;
         gf[1] = p_field_AI;
         gf[2] = strategy_map;
-        if(!gc.set_gc_field(gf))return false;
+        //if(!gc.set_gc_field(gf))return false;
+        gc.set_gc_field(gf);
 
-        if(!gc.set_gc_ttrp(now_ttrp))return false;
+
+        //if(!gc.set_gc_ttrp(now_ttrp))return false;
+        gc.set_gc_ttrp(now_ttrp);
 
         //gc.p_field_AI = p_field_AI;
         //strategy_map = VVI(45, (VI(10, 0)));
