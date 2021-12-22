@@ -3,7 +3,7 @@
 int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
-const int branch_num = 5;
+const int branch_num = 8;
 const int fh = 45;
 
 
@@ -140,7 +140,7 @@ namespace shig {
         height_mxm = 0;
         ttrp_size = 0;
         ttrp_ofsY = 0;
-        exp_cyc_lim = 5;
+        exp_cyc_lim = 6;
         ttrp_able = false;
 		todo = VI(0);
 		field_AI = VVI(45, (VI(10, 0)));
@@ -589,9 +589,9 @@ namespace shig {
         vector<pair<cmd_pattern, int>> catalog(0);
         catalog.reserve(700);
 
-
         cp.clear(); cv.clear();
-        catalog.clear();
+        //catalog.clear();
+        
         search_way(gc_org, catalog);
 
         sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
