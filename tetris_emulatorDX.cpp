@@ -507,9 +507,16 @@ void run_AI(shig::shigune_AI& ai) {
         
         */
 
+        GetHitKeyStateAll(KeyBuf);
         
+        if (KeyBuf[KEY_INPUT_R]) {
+            show_field(0);
+            WaitTimer(500);
+            set_field();
+            g_check = 0;
+        }
 
-        if (CheckHitKey(KEY_INPUT_G)) {
+        if (KeyBuf[KEY_INPUT_G]) {
             edit_garbage_cmd(1);
             g_check = 0;
         }
