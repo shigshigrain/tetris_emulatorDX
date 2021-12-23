@@ -234,7 +234,6 @@ namespace shig {
 		return select.cmd_list;
 	}
 
-
 	VI shigune_AI::get_cmd() {
 		// hold : 1, soft : 2, hard : 3, L_rot : 4, R_rot : 5, l_move : 6, r_move : 7;
         VI cmd = {};
@@ -1040,16 +1039,16 @@ namespace shig {
                     if (k == 0 && l == 0)continue;
                     int ssX = cd.pat.X + j + cx[k];
                     if (ssX < 0 || ssX >= 10) {
-                        touch += 10;
+                        touch += 5;
                         continue;
                     }
                     int ssY = cd.pat.Y - i - 1 + cy[l];
                     if (ssY < 0 || ssY >= (gcs.field_AI.size() - 1)) {
-                        touch += 10;
+                        touch += 5;
                         continue;
                     }
                     if (gcs.field_AI[ssY][ssX] != 0)touch += 30;
-                    else touch -= 30;
+                    else touch -= 15;
 
                     if (gcs.p_field_AI[ssY][ssX] != 0)continue;
 
@@ -1068,8 +1067,8 @@ namespace shig {
                         if (gcs.p_field_AI[sssY][sssX] != 0)closure++;
                     }
 
-                    if (closure == 4)touch -= 100;
-
+                    if (closure >= 4)touch -= 100;
+                    //else touch += 50;
 
                 }
 
@@ -1085,21 +1084,31 @@ namespace shig {
             cd.update(cmb_rate);
         }
         else {
-            cd.update(cmb_rate * -1LL);
+            cd.update(cmb_rate * 0LL);
         }
 
-        auto chk_PC = [&] {
-            bool cnt_pc = true;
-            shig_rep(i, 10) {
-                if (gcs.p_field_AI[0][i] != 0) {
-                    cnt_pc = false;
-                    break;
+      
+
+        bool isPC = true;
+        VI lc(all(L));
+        int lcs = (int)lc.size();
+        if (lc.size() == 0)isPC = false;
+        else {
+            int le = lc.front(), re = lc.back();
+            if (re - le + 1 == lcs) {
+                shig_rep(i, 10) {
+                    if (gcs.p_field_AI[re+1][i] != 0) {
+                        isPC = false;
+                        break;
+                    }
                 }
             }
-            return cnt_pc;
-        }();
+            else {
+                isPC = false;
+            }
+        }
 
-        if (chk_PC)cd.update(114514810);
+        if (isPC)cd.update(114514810);
 
 
         int p_A = 128;
@@ -1146,10 +1155,10 @@ namespace shig {
             if (gcs.TS_kind == 1) {
 
                 if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
-                    ve += 150;
+                    ve += 1500;
                 }
                 else {
-                    ve += 200;
+                    ve += 2000;
                 }
             }
             else if (gcs.TS_kind == 2) {
