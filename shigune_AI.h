@@ -35,8 +35,11 @@ typedef vector<string> VS;
 
 
 // shigune : main part of AI and do decide act;
+
 const VI cx = { -1, 0, 1 };
 const VI cy = { -1, 0, 1 };
+
+
 const vector<pairI2> cc = {
 	{1, 0},
 	{-1, 0},
@@ -188,39 +191,7 @@ const VVI base_cmd = {
 
 };
 
-const VVI TSD_L = {
-	{3, 3, 0, 1, 1, 1, 1, 5, 4, 4},
-	{3, 0, 0, 0, 7, 7, 5, 5, 4, 4},
-	{3, -1, -1, 7, 7, 2, 5, 0, 0, 0},
-	{0, -1, -1, 2, 2, 2, 0, 0, 0, 0},
-};
 
-const VVI TSD_J = {
-	{4, 4, 7, 1, 1, 1, 1, 0, 2, 2},
-	{4, 4, 7, 7, 5, 5, 0, 0, 0, 2},
-	{0, 0, 0, 7, 3, 5, 5, -1, -1, 2},
-	{0, 0, 0, 0, 3, 3, 3, -1, -1, 0},
-};
-
-const VVI HK_ZZ = {
-	{4, 4, 3, 3, 0, 7, 7, 6, 2, 2},
-	{4, 4, 3, 0, 7, 7, 6, 6, 1, 2},
-	{5, 5, 3, 0, 0, 7, 7, 6, 1, 2},
-	{2, 5, 5, 0, 7, 7, 4, 4, 1, 1},
-	{2, 5, 5, 0, 0, 0, 4, 4, 1, 1},
-	{2, 2, 5, 5, 0, -1, 3, 3, 3, 1},
-	{0, 0, 0, 0, 0, 0, 0, 0, 3, 1},
-};
-
-const VVI HK_SS = {
-	{3, 3, 6, 5, 5, 0, 2, 2, 4, 4},
-	{3, 1, 6, 6, 5, 5, 0, 2, 4, 4},
-	{3, 1, 6, 5, 5, 0, 0, 2, 7, 7},
-	{1, 1, 4, 4, 5, 5, 0, 7, 7, 3},
-	{1, 1, 4, 4, 0, 0, 0, 7, 7, 3},
-	{1, 2, 2, 2, -1, 0, 7, 7, 3, 3},
-	{1, 2, 0, 0, 0, 0, 0, 0, 0, 0},
-};
 
 struct cmd_pattern {
 	LL score = 0;
@@ -469,6 +440,7 @@ namespace shig {
 		cmd_pattern explore_choices(game_container &gc_org);
 		void get_score(cmd_pattern& cd);
 		void get_score(cmd_pattern& cd, game_container& gcs);
+		LL gs_BFS(cmd_pattern& cb, game_container& gcb);
 		bool move_check(int to_x, int to_y, tetri& s_check);
 		bool move_check(int to_x, int to_y, tetri& s_check, game_container& ggc);
 		bool SRS_check(int lr, tetri& s_now);

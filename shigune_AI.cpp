@@ -3,7 +3,8 @@
 int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
-const int branch_num = 8;
+const int branch_num = 6;
+const int cyc_num = 7;
 const int fh = 45;
 
 
@@ -140,7 +141,7 @@ namespace shig {
         height_mxm = 0;
         ttrp_size = 0;
         ttrp_ofsY = 0;
-        exp_cyc_lim = 6;
+        exp_cyc_lim = cyc_num;
         ttrp_able = false;
 		todo = VI(0);
 		field_AI = VVI(45, (VI(10, 0)));
@@ -484,7 +485,7 @@ namespace shig {
 
     void shigune_AI::search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv) {
         
-        constexpr int mxm = 400;
+        constexpr int mxm = 300;
         if (gc.current_AI == 0)return;
         gc.p_field_AI = gc.field_AI;
         VI rsv(0); rsv.reserve(30);
@@ -500,11 +501,12 @@ namespace shig {
         }
 
         int w = 0;
+        tetri test;
         while (!search_tree[w].empty() && (w < mxm - 1)) {
             bool can = true;
             int w_size = search_tree[w].size();
 
-            tetri test;
+            
             if (parent_tree[w] == w) {
                 test.minset(gc.current_AI);
                 shig_rep(i, search_tree[w].size() - 1) {
@@ -550,6 +552,7 @@ namespace shig {
                             }
                         }
                         if (!can) continue;
+
                         int sft = -1; int hd_cnt = 0;
                         while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
                         move_mino(test, 3, gc);
@@ -959,6 +962,9 @@ namespace shig {
 
     void shigune_AI::get_score(cmd_pattern& cd, game_container& gcs) {
 
+        gcs.p_field_AI = gcs.field_AI;
+        shigune_AI::apply_mino(gcs.p_field_AI, cd.pat);
+
         cd.set_ts(gcs.SRS_kind, gcs.TS_kind);
         set<int> L = erase_check_AI(cd.pat, gcs);
         LL fusion = 0;
@@ -1001,12 +1007,15 @@ namespace shig {
         */
 
         //contact
+
+
+        //contact
         shig_rep(j, W) {
             if (ch[idnt][rot][j] == 1) {
                 int xp = cd.pat.X + j;
                 int h = cd.pat.Y - gcs.height[xp] - 1;
                 if (h >= 0 && h < H) {
-                    if (cd.pat.mino[rot][h][j] != 0)contact += 12;
+                    if (cd.pat.mino[rot][h][j] != 0)contact += 20;
                     else contact -= 10;
                 }
                 else contact -= 10;
@@ -1016,16 +1025,18 @@ namespace shig {
 
 
         //high
-        if (high > 8) {
+        if (high > 10) {
             high = (-1 * high * high);
         }
-        else {
-            high = (high * -9);
+        else if(high > 5) {
+            high = (high * -10);
         }
-        //high *= -1000;
-
+        else {
+            high = (high * -5);
+        }
 
         //closure & touch
+
         shig_rep(i, H) {
             shig_rep(j, W) {
                 if (cd.pat.mino[rot][i][j] == 0)continue;
@@ -1033,8 +1044,8 @@ namespace shig {
                 if (sX < 0 || sX >= 10)continue;
                 int sY = cd.pat.Y - i - 1;
                 if (sY < 0 || sY >= (gcs.field_AI.size() - 1))continue;
-                apply_mino(gcs.p_field_AI, cd.pat);
-                set<pairI2> p_check;
+
+                //set<pairI2> p_check;
                 shig_rep(k, cy.size())shig_rep(l, cx.size()) {
                     if (k == 0 && l == 0)continue;
                     int ssX = cd.pat.X + j + cx[k];
@@ -1047,8 +1058,8 @@ namespace shig {
                         touch += 5;
                         continue;
                     }
-                    if (gcs.field_AI[ssY][ssX] != 0)touch += 30;
-                    else touch -= 15;
+                    if (gcs.p_field_AI[ssY][ssX] != 0)touch += 20;
+                    else touch += -15;
 
                     if (gcs.p_field_AI[ssY][ssX] != 0)continue;
 
@@ -1088,7 +1099,6 @@ namespace shig {
         }
 
       
-
         bool isPC = true;
         VI lc(all(L));
         int lcs = (int)lc.size();
@@ -1111,7 +1121,7 @@ namespace shig {
         if (isPC)cd.update(114514810);
 
 
-        int p_A = 128;
+        int p_A = 64;
         LL ve = 0;
         if (L.size() == 0) {
 
@@ -1119,7 +1129,10 @@ namespace shig {
                 ve -= 500;
             }
             else {
-                ve += 20;
+                ve += 30;
+
+                if (cd.pat.id == 6)ve -= 50;
+
             }
         }
         else if (L.size() == 1) {
@@ -1134,7 +1147,7 @@ namespace shig {
             }
             else if (gcs.TS_kind == 2) {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                if (gcs.height_sum > p_A || gcs.height_mxm > 11) {
                     ve += 40;
                 }
                 else {
@@ -1143,70 +1156,90 @@ namespace shig {
             }
             else {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
-                    ve += 60;
+                if (gcs.height_sum > p_A || gcs.height_mxm > 8) {
+                    ve += 300;
                 }
                 else {
                     ve += 30;
+                    if (cd.pat.id == 6) {
+                        ve += -3000;
+                    }
                 }
+
+
+
             }
         }
         else if (L.size() == 2) {
             if (gcs.TS_kind == 1) {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
-                    ve += 1500;
+                if (gcs.height_sum > p_A || gcs.height_mxm > 11) {
+                    ve += 15000;
                 }
                 else {
-                    ve += 2000;
+                    ve += 20000;
                 }
             }
             else if (gcs.TS_kind == 2) {
                 ve += 1;
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                if (gcs.height_sum > p_A || gcs.height_mxm > 11) {
                     ve += 5;
                 }
             }
             else {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                if (gcs.height_sum > p_A || gcs.height_mxm > 11) {
                     ve += 100;
                 }
                 else {
-                    ve += 50;
+                    ve += 30;
                 }
+
+                if (cd.pat.id == 6) {
+                    ve += -3000;
+                }
+
             }
         }
         else if (L.size() == 3) {
             if (gcs.TS_kind == 1) {
                 //ve += 400;
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
-                    ve += 300;
+                if (gcs.height_sum > p_A || gcs.height_mxm > 11) {
+                    ve += 30000;
                 }
                 else {
-                    ve += 400;
+                    ve += 40000;
                 }
             }
             else if (gcs.TS_kind == 2) {
                 ve += 0;
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
+                if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
                     ve -= 0;
                 }
             }
             else {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
-                    ve += 120;
+                if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
+                    ve += 200;
+
+                    if (cd.pat.id == 1) {
+                        ve += 500;
+                    }
                 }
                 else {
-                    ve += 10;
+                    ve += 20;
+                    if (cd.pat.id == 1) {
+                        ve += -500;
+                    }
                 }
+
+                
             }
         }
         else if (L.size() == 4) {
-            ve += 2000;
-            if (gcs.height_sum > p_A || gcs.height_mxm > 13) {
-                ve += 3000;
+            ve += 40000;
+            if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
+                ve += 20000;
             }
         }
 
@@ -1216,7 +1249,6 @@ namespace shig {
         bool chk_f = false;
         tetri ofs_cdp = cd.pat;
         ofs_cdp.addY(gcs.ttrp_ofsY);
-
 
         if (gcs.ttrp_able) {
             shig_rep(i, min({ gcs.now_ttrp.mino_num , (int)gcs.now_ttrp.list_mino.size() })) {
@@ -1267,7 +1299,7 @@ namespace shig {
         ve *= ve_rate;
         cd.update(ve);
 
-        touch *= 50;
+        touch *= 100;
         cd.update(touch);
 
         cd.update(high);
@@ -1275,9 +1307,59 @@ namespace shig {
         contact *= 50;
         cd.update(contact);
 
+        cd.update(shigune_AI::gs_BFS(cd, gcs));
+
         cd.update(gcs.pre_score);
 
         return;
+    }
+
+    LL shigune_AI::gs_BFS(cmd_pattern& cb, game_container& gcb) {
+
+        int open_blc = 0;
+        int mino_blc = 0;
+        int clos_blc = 0;
+
+        VVI b_field_AI(25, (VI(10, -1)));
+
+        queue<pair<int, int>> xy;
+        xy.push({ 24, 0 });
+
+        while (!xy.empty()) {
+            pair<int, int> now = xy.front(); xy.pop();
+            if (b_field_AI.at(now.first).at(now.second) != -1)continue;
+            else b_field_AI.at(now.first).at(now.second) = 0;
+
+            for (int i = 0; i < cc.size(); i++) {
+                int y = now.first  + cc.at(i).first;
+                int x = now.second + cc.at(i).second;
+
+                if (y < 0 || y >= 25)continue;
+                else if (x < 0 || x >= 10)continue;
+                else if (gcb.p_field_AI.at(y).at(x) != 0)continue;
+                else if (b_field_AI.at(y).at(x) != -1)continue;
+                else xy.push({ y, x });
+
+            }
+
+        }
+
+        for (int i = 0; i < 25; i++) {
+            for (int j = 0; j < 10; j++) {
+
+                if (gcb.p_field_AI.at(i).at(j) != 0)mino_blc++;
+                else if (b_field_AI.at(i).at(j) == -1)clos_blc++;
+                else if (b_field_AI.at(i).at(j) == 0)open_blc++;
+            }
+        }
+
+        LL b_closure = 10000;
+        b_closure -= 10000 * clos_blc;
+        b_closure += open_blc;
+
+
+        return b_closure;
+
     }
 
 	bool shigune_AI::move_check(int to_x, int to_y, tetri& s_check) {
