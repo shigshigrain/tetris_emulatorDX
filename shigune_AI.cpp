@@ -3,8 +3,8 @@
 int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
-const int branch_num = 6;
-const int cyc_num = 7;
+const int branch_num = 8;
+const int cyc_num = 6;
 const int fh = 45;
 
 
@@ -1045,7 +1045,6 @@ namespace shig {
                 int sY = cd.pat.Y - i - 1;
                 if (sY < 0 || sY >= (gcs.field_AI.size() - 1))continue;
 
-                //set<pairI2> p_check;
                 shig_rep(k, cy.size())shig_rep(l, cx.size()) {
                     if (k == 0 && l == 0)continue;
                     int ssX = cd.pat.X + j + cx[k];
@@ -1063,6 +1062,7 @@ namespace shig {
 
                     if (gcs.p_field_AI[ssY][ssX] != 0)continue;
 
+                    /*
                     int closure = 0;
                     shig_rep(m, cc.size()) {
                         int sssX = cd.pat.X + j + cx[k] + cc[m].first;
@@ -1079,7 +1079,9 @@ namespace shig {
                     }
 
                     if (closure >= 4)touch -= 100;
-                    //else touch += 50;
+                    //else touch += 50
+                    */
+
 
                 }
 
