@@ -10,6 +10,7 @@
 #include <set>
 #include <chrono>
 #include <thread>
+#include <immintrin.h>
 
 using namespace std;
 //using namespace shig;
@@ -246,6 +247,6 @@ int get_delayF();
 void edit_garbage_cmd(int i);
 VI get_game_state();
 VS get_ts_state();
-int get_combo();
+pair<int, int> get_combo();
 deque<string> get_mino_his();
 

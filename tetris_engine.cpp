@@ -1140,8 +1140,8 @@ VS get_ts_state() {
     return ts_state;
 }
 
-int get_combo() {
-    return combo;
+pair<int, int> get_combo() {
+    return { combo, btb };
 }
 
 deque<string> get_mino_his() {

@@ -194,10 +194,11 @@ const VVI base_cmd = {
 
 
 struct cmd_pattern {
-	LL score = 0;
+	LL score = 100000;
 	int index = -1;
 	int srs = 0, kind = 0;
 	int ttrp_f = -1;
+	bool isSFT = false;
 	VI cmd_list = {};
 	tetri pat;
 
@@ -213,6 +214,10 @@ struct cmd_pattern {
 
 	void set_ttrpF(int& sf) {
 		ttrp_f = sf;
+	}
+
+	void set_isSFT(const bool& sf) {
+		isSFT = sf;
 	}
 
 	void set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k) {
@@ -355,6 +360,7 @@ namespace shig {
 		int SRS_kind;
 		int TS_kind;
 		int combo;
+		int btb;
 		int height_sum;
 		int height_mxm;
 		int ttrp_size;
@@ -398,6 +404,7 @@ namespace shig {
 		int SRS_kind;
 		int TS_kind;
 		int combo;
+		int btb;
 		int height_sum;
 		int height_mxm;
 		int ttrp_size;
