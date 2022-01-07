@@ -3,6 +3,8 @@
 
 時々雨ルル@tokidoki_rain
 
+tetris emulatorDX(v3.6.2) tested
+
 tetris emulatorDX(v3.6.0) latest
 
 tetris emulatorDX(v3.4.9) old
