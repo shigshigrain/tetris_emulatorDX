@@ -192,7 +192,6 @@ const VVI base_cmd = {
 };
 
 
-
 struct cmd_pattern {
 	LL score = 100000;
 	int index = -1;
@@ -448,6 +447,7 @@ namespace shig {
 		void get_score(cmd_pattern& cd);
 		void get_score(cmd_pattern& cd, game_container& gcs);
 		LL gs_BFS(cmd_pattern& cb, game_container& gcb);
+		bool height_calc(game_container& gch);
 		bool move_check(int to_x, int to_y, tetri& s_check);
 		bool move_check(int to_x, int to_y, tetri& s_check, game_container& ggc);
 		bool SRS_check(int lr, tetri& s_now);
