@@ -47,6 +47,8 @@ const vector<pairI2> cc = {
 	{0, -1}
 };
 
+const VI NS_a = { 6, 1, 5, 7, 2, 3, 4 };
+
 const VVVI ch = {
 
 	{
