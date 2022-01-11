@@ -135,5 +135,25 @@
     <None Include="template\data\gamusiroZ_1-1.ttrp" />
     <None Include="template\data\gamusiroZ_2-1.ttrp" />
     <None Include="template\data\gamusiroZ_2-2.ttrp" />
+    <None Include="template\data\3rPC_Z_OZ_4.ttrp" />
+    <None Include="template\data\3rPC_Z_ZO_4.ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(LOJSIT).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(LOTJIS).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(LSIOJT).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(LTSJOI).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(OLJIST).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(OLJSIT).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(OLSJTI).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(TJIOLS).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(SLTIJO).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(TJLSIO).ttrp" />
+    <None Include="template\data\hotcakeZ_3-1(TJOLIS).ttrp" />
+    <None Include="template\data\newDT_LS_1-1.ttrp" />
+    <None Include="template\data\newDT_LS_1-2.ttrp" />
+    <None Include="template\data\newDT_LS_2-1.ttrp" />
+    <None Include="template\data\newDT_LS_3-1.ttrp" />
+    <None Include="template\data\newDT_LS_4-1.ttrp" />
+    <None Include="template\data\newDT_LS_5-1.ttrp" />
+    <None Include="template\data\newDT_LS_4-2.ttrp" />
   </ItemGroup>
 </Project>

@@ -193,7 +193,7 @@ const VVI base_cmd = {
 
 
 struct cmd_pattern {
-	LL score = 100000;
+	LL score = 0;
 	int index = -1;
 	int srs = 0, kind = 0;
 	int ttrp_f = -1;
@@ -470,7 +470,7 @@ namespace shig {
 		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL, game_container& gct);
 		bool next_crr_check();
 		bool set_gc(game_container &gc);
-		game_container update_gc(cmd_pattern& ct, game_container pre_gc);
+		game_container update_gc(cmd_pattern& ct, game_container gcp);
 
 		~shigune_AI();
 	};
