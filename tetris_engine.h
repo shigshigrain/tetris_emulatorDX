@@ -10,7 +10,9 @@
 #include <set>
 #include <chrono>
 #include <thread>
+#include <memory>
 #include <immintrin.h>
+#include <malloc.h>
 
 using namespace std;
 //using namespace shig;

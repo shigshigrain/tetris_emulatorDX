@@ -194,6 +194,32 @@ const VVI base_cmd = {
 };
 
 
+struct cmd_score {
+	
+	LL sum = 0;
+
+	LL height = 0;
+	LL touch = 0;
+	LL contact = 0;
+	LL erase = 0;
+	LL btbc = 0;
+	LL closed = 0;
+	LL PC = 0;
+
+
+	bool t_calc_sum() {
+
+		__m256i vec1 = _mm256_set_epi64x(height, touch, contact, erase);
+		__m256i vec2 = _mm256_set_epi64x(btbc, closed, PC, 0LL);
+
+		__m256i sumA = _mm256_add_epi64(vec1, vec2);
+
+		this->sum = sumA.m256i_i64[0] + sumA.m256i_i64[1] + sumA.m256i_i64[2] + sumA.m256i_i64[3];
+
+	}
+
+};
+
 struct cmd_pattern {
 	LL score = 0;
 	int index = -1;
@@ -478,10 +504,6 @@ namespace shig {
 	};
 
 	// hold : 1, soft : 2, hard : 3, L_rot : 4, R_rot : 5, l_move : 6, r_move : 7;
-
-	
-
-
 
 }
 
