@@ -1,18 +1,7 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <queue>
-#include <random>
-#include <set>
-#include <chrono>
-#include <thread>
-#include <memory>
-#include <immintrin.h>
-#include <malloc.h>
+#include "shig_utility.h"
+
 
 using namespace std;
 //using namespace shig;

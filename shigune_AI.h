@@ -1,15 +1,6 @@
 #pragma once
 #include "tetris_engine.h"
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <queue>
-#include <random>
-#include <set>
-#include <chrono>
-#include <thread>
+
 
 using namespace std;
 
@@ -48,6 +39,8 @@ const vector<pairI2> cc = {
 };
 
 const VI NS_a = { 6, 1, 5, 7, 2, 3, 4 };
+
+const VI ev_empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
 
 const VVVI ch = {
 
@@ -198,30 +191,119 @@ struct cmd_score {
 	
 	LL sum = 0;
 
-	LL height = 0;
-	LL touch = 0;
+	LL height  = 0;
+	LL touch   = 0;
 	LL contact = 0;
-	LL erase = 0;
-	LL btbc = 0;
-	LL closed = 0;
-	LL PC = 0;
+	LL erase   = 0;
+	LL cmb     = 0;
+	LL btbc    = 0;
+	LL closed  = 0;
+	LL PC      = 0;
 
+	cmd_score() {
+		height  = 0;
+		touch   = 0;
+		contact = 0;
+		erase   = 0;
+		cmb     = 0;
+		btbc    = 0;
+		closed  = 0;
+		PC      = 0;
+	}
+
+
+	bool init() {
+		height  = 0;
+		touch   = 0;
+		contact = 0;
+		erase   = 0;
+		cmb     = 0;
+		btbc    = 0;
+		closed  = 0;
+		PC      = 0;
+		return true;
+	}
+
+	bool init_s() {
+		sum = 0;
+		height = 0;
+		touch = 0;
+		contact = 0;
+		erase = 0;
+		cmb = 0;
+		btbc = 0;
+		closed = 0;
+		PC = 0;
+		return true;
+	}
 
 	bool t_calc_sum() {
 
 		__m256i vec1 = _mm256_set_epi64x(height, touch, contact, erase);
-		__m256i vec2 = _mm256_set_epi64x(btbc, closed, PC, 0LL);
+		__m256i vec2 = _mm256_set_epi64x(cmb, btbc, closed, PC);
 
 		__m256i sumA = _mm256_add_epi64(vec1, vec2);
 
 		this->sum = sumA.m256i_i64[0] + sumA.m256i_i64[1] + sumA.m256i_i64[2] + sumA.m256i_i64[3];
 
+		return true;
 	}
+
+	bool calc_sum() {
+
+		//this->sum = 0;
+		this->sum = shig::secure_add(sum, height);
+		this->sum = shig::secure_add(sum, touch);
+		this->sum = shig::secure_add(sum, contact);
+		this->sum = shig::secure_add(sum, erase);
+		this->sum = shig::secure_add(sum, cmb);
+		this->sum = shig::secure_add(sum, btbc);
+		this->sum = shig::secure_add(sum, closed);
+		this->sum = shig::secure_add(sum, PC);
+
+		return true;
+	}
+
+	LL get_sum() {
+		calc_sum();
+		return this->sum;
+	}
+
+	bool operator < (const cmd_score& ath) const {
+		
+		if (sum != ath.sum)return sum < ath.sum;
+		else {
+			if (PC != ath.PC)return PC < ath.PC;
+			else {
+				if (height != ath.height)return height < ath.height;
+				else {
+					if (touch != ath.touch)return touch < ath.touch;
+					else {
+						if (contact != ath.contact)return contact < ath.contact;
+						else {
+							if (erase != ath.erase)return erase < ath.erase;
+							else {
+								if (closed != ath.closed)return closed < ath.closed;
+								else return btbc < ath.btbc;
+
+							}
+
+						}
+
+					}
+				}
+			}
+		}
+
+	}
+
+
 
 };
 
 struct cmd_pattern {
-	LL score = 0;
+	LL score = 1000000000;
+	cmd_score scr;
 	int index = -1;
 	int srs = 0, kind = 0;
 	int ttrp_f = -1;
@@ -232,7 +314,10 @@ struct cmd_pattern {
 	cmd_pattern() {};
 	cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
 	
-	//set<int> d_line;
+	void update() {
+		score += scr.get_sum();
+		return;
+	}
 
 	void update(LL u) {
 		score += u;
@@ -474,7 +559,7 @@ namespace shig {
 		cmd_pattern explore_choices(game_container &gc_org);
 		void get_score(cmd_pattern& cd);
 		void get_score(cmd_pattern& cd, game_container& gcs);
-		LL gs_BFS(cmd_pattern& cb, game_container& gcb);
+		LL gs_BFS(cmd_pattern& cb, VVI& qf);
 		bool height_calc(game_container& gch);
 		bool move_check(int to_x, int to_y, tetri& s_check);
 		bool move_check(int to_x, int to_y, tetri& s_check, game_container& ggc);

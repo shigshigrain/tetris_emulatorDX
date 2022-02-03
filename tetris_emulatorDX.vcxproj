@@ -161,12 +161,14 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="shigune_AI.h" />
+    <ClInclude Include="shig_utility.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tetris_emulatorDX.h" />
     <ClInclude Include="tetris_engine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="shigune_AI.cpp" />
+    <ClCompile Include="shig_utility.cpp" />
     <ClCompile Include="tetris_emulatorDX.cpp" />
     <ClCompile Include="tetris_engine.cpp" />
   </ItemGroup>
