@@ -38,6 +38,10 @@ const vector<pairI2> cc = {
 	{0, -1}
 };
 
+const vector<int> expl_width = { 25, 25, 25, 25, 20, 20, 20, 20, 15, 15, 15, 15, 10, 10, 10 };
+
+const vector<int> scr_rate = { 100, 100, 95, 95, 95, 90, 90, 90, 80, 80, 80, 50, 50, 50 ,50, 50, 50, 50, 50, 50 };
+
 const VI NS_a = { 6, 1, 5, 7, 2, 3, 4 };
 
 const VI ev_empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
@@ -401,12 +405,12 @@ struct tetriplate {
 	int tp_id = 0;
 	int terms_num = 0;
 	int bgn_f = 0;
-	vector<pairI2> terms = {};
-	VI list_id = {};
-	vector<bool> mino_check = vector<bool>(7, false);
+	vector<pairI2> terms = vector<pairI2>(0);
+	vector<int> list_id = vector<int>(0);
+	vector<bool> mino_check = vector<bool>(0);
 	string temp_name = "template";
-	vector<tetri> list_mino = {};
-	vector<int> list_mino_s = {};
+	vector<tetri> list_mino = vector<tetri>(0);
+	vector<int> list_mino_s = vector<int>(0);
 
 	//tetriplate(const int& a, const int& b, const int& c, const int& d, const string& e) : mino_num(a), list_size(b), tp_id(c), terms_num(d), temp_name(e) {};
 
@@ -555,10 +559,10 @@ namespace shig {
 		bool pc_check();
 		void bgn_strategy();
 		void search_way();
-		void search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv);
+		void search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv, int loop);
 		cmd_pattern explore_choices(game_container &gc_org);
 		void get_score(cmd_pattern& cd);
-		void get_score(cmd_pattern& cd, game_container& gcs);
+		void get_score(cmd_pattern& cd, game_container& gcs, int loopc);
 		LL gs_BFS(cmd_pattern& cb, VVI& qf);
 		bool height_calc(game_container& gch);
 		bool move_check(int to_x, int to_y, tetri& s_check);
@@ -584,6 +588,8 @@ namespace shig {
 		bool next_crr_check();
 		bool set_gc(game_container &gc);
 		game_container update_gc(cmd_pattern& ct, game_container gcp);
+
+		int ttrp_check_mino(tetri& fd, game_container& gcf);
 
 		~shigune_AI();
 	};
