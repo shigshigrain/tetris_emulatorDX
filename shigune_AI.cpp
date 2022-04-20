@@ -3,8 +3,8 @@
 int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
-const int branch_num = 25;//branch_num >= 25
-const int cyc_num = 6;//up to 14
+const int branch_num = 20;//branch_num >= 20
+const int cyc_num = 7;//up to 14
 const int fh = 45;
 
 
@@ -998,7 +998,7 @@ namespace shig {
         int W = cd.pat.mino[rot][0].size();
         int Ls = L.size();
 
-        constexpr int hm = 9;
+        constexpr int hm = 10;
         constexpr int hs = hm * 8;
 
         bool isPC = true;
@@ -1014,9 +1014,9 @@ namespace shig {
             isPC = false;
         }
 
-        if (isPC)cd.scr.sum = shig::secure_add(11451419198100000LL, cd.scr.sum);
+        if (isPC)cd.scr.sum = shig::secure_add(1145141919810000LL, cd.scr.sum);
 
-        LL ttrp_rate = 10000000000000000;
+        LL ttrp_rate = 1000000000000000;
 
         bool chk_f = false;
         tetri ofs_cdp = cd.pat;
@@ -1066,7 +1066,7 @@ namespace shig {
         }
         else {
             LL pnl = -10000000;
-            cd.scr.sum += pnl;
+            cd.scr.sum = shig::secure_add(cd.scr.sum, pnl);
         }
 
         //fusion score
@@ -1096,18 +1096,16 @@ namespace shig {
 
         */
 
-        //contact
 
 
         //contact.V1
         int cnt_m = 0, cnt_n = 0;
         vector<bool> chk_con(W, false);
-
         shig_rep(j, W) {
-            if (ch[idnt][rot][j] == 1) {
+            if (ch.at(idnt).at(rot).at(j) == 1) {
                 cnt_m++;
                 int xp = cd.pat.X + j;
-                int h = cd.pat.Y - gcs.height[xp] - 1;
+                int h  = cd.pat.Y - gcs.height.at(xp) - 1;
                 if (h >= 0 && h < H) {
                     if (cd.pat.mino.at(rot).at(h).at(j) != 0) {
                         cnt_n++;
@@ -1116,124 +1114,218 @@ namespace shig {
                         if (h >= 1) {
                             if (cd.pat.mino.at(rot).at(h - 1).at(j) != 0) {
                                 chk_con.at(j) = true;
+                                contact -= 200;
+                            }
+                            else {
+                                contact -= 500;
                             }
                         }
                         
                     }
                 }
                 else if (h >= H) {
-                    touch -= 1000;
+                    contact -= 10000;
                 }
 
             }
         }
 
-        const LL pnl_A = 2000, pnl_B = -2000, pnl_C = -1000;
+        const LL pnl_A = 3000, pnl_B = -4000, pnl_C = -6000;
 
         if (cd.pat.id == 1) {
             if (cd.pat.rot == 0 || cd.pat.rot == 2) {
-                if (cnt_n == 4)contact = pnl_A;
-                else if (cnt_n == 3 && (chk_con.at(0) == true || chk_con.at(3) == true))contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 4)contact += pnl_A;
+                else if (cnt_n == 3 && (chk_con.at(0) == true || chk_con.at(3) == true))contact += pnl_B;
+                else contact += pnl_C;
             }
             else {
-                if (cnt_n == 1)contact = pnl_A;
-                else contact = pnl_C;
+                if (cnt_n == 1)contact += pnl_A;
+                else contact += pnl_C;
             }
         }
-        else if (cd.pat.id == 2 || cd.pat.id == 3) {
+        else if (cd.pat.id == 2) {
             if (cd.pat.rot == 0 || cd.pat.rot == 2) {
-                if (cnt_n == 3)contact = pnl_A;
-                else contact = pnl_C;
+                if (cnt_n == 3)contact += pnl_A;
+                else contact += pnl_C;
             }
             else {
-                if (cnt_n == 2)contact = pnl_A;
-                else contact = pnl_C;
+                if (cnt_n == 2)contact += pnl_A;
+                else contact += pnl_C;
+            }
+        }
+        else if (cd.pat.id == 3) {
+            if (cd.pat.rot == 0 || cd.pat.rot == 2) {
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && chk_con.at(0) == true)contact += pnl_B;
+                else contact += pnl_C;
+            }
+            else {
+                if (cnt_n == 2)contact += pnl_A;
+                else contact += pnl_C;
             }
         }
         else if (cd.pat.id == 4) {
-            if (cnt_n == 2)contact = pnl_A;
-            else contact = pnl_C;
+            if (cnt_n == 2)contact += pnl_A;
+            else contact += pnl_C;
         }
         else if (cd.pat.id == 5) {
             if (cd.pat.rot == 0 || cd.pat.rot == 2) {
-                if (cnt_n == 3)contact = pnl_A;
-                else if (cnt_n == 2 && chk_con.at(2) == true)contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && chk_con.at(2) == true)contact += pnl_B;
+                else contact += pnl_C;
             }
             else {
-                if (cnt_n == 2)contact = pnl_A;
-                else if (cnt_n == 1 && chk_con.at(1) == true)contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(1) == true)contact += pnl_B;
+                else contact += pnl_C;
             }
         }
         else if (cd.pat.id == 6) {
             if (cd.pat.rot == 0 || cd.pat.rot == 2) {
-                if (cnt_n == 3)contact = pnl_A;
-                else if (cnt_n == 2 && (chk_con.at(0) == true || chk_con.at(2) == true))contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && (chk_con.at(0) == true || chk_con.at(2) == true))contact += pnl_B;
+                else contact += pnl_C;
             }
             else if (cd.pat.rot == 1) {
-                if (cnt_n == 2)contact = pnl_A;
-                else if (cnt_n == 1 && chk_con.at(2) == true)contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(2) == true)contact += pnl_B;
+                else contact += pnl_C;
             }
             else if (cd.pat.rot == 3) {
-                if (cnt_n == 2)contact = pnl_A;
-                else if (cnt_n == 1 && chk_con.at(0) == true)contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(0) == true)contact += pnl_B;
+                else contact += pnl_C;
             }
 
         }
         else if (cd.pat.id == 7) {
             if (cd.pat.rot == 0 || cd.pat.rot == 2) {
-                if (cnt_n == 3)contact = pnl_A;
-                else if (cnt_n == 2 && chk_con.at(0) == true)contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && chk_con.at(0) == true)contact += pnl_B;
+                else contact += pnl_C;
             }
             else {
-                if (cnt_n == 2)contact = pnl_A;
-                else if (cnt_n == 1 && chk_con.at(1) == true)contact = pnl_B;
-                else contact = pnl_C;
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(1) == true)contact += pnl_B;
+                else contact += pnl_C;
             }
         }
-
 
 
         //high
         
-        if (cd.pat.Y >= 12) {
-            high = (-10 * cd.pat.Y * cd.pat.Y);
-        }
-        else if(cd.pat.Y >= 6) {
-            high = (-10 * cd.pat.Y * cd.pat.Y);
+        LL cdY = cd.pat.Y;
 
-            if (gcs.height_sum > 80 || gcs.height_mxm > 10) {
-                high += 0;
+        if (cdY >= 14) {
+            high = (-10 * cdY * cdY * cdY);
+        }
+        else if(cdY >= 7) {
+            high = (-10 * cdY * cdY);
+
+            if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                high += 100 * (6 - cdY);
             }
 
         }
         else {
-            high = (-60LL * cd.pat.Y);
+            high = (-10LL * cdY);
 
-            if (gcs.height_sum > 80 || gcs.height_mxm > 10) {
-               high += 0;
+            if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+               high += 500 * (7 - cdY);
             }
 
         }
 
-        
-
-
         //closure & touch
+        int tls = touch_list.at(idnt).at(rot).size();
+        LL thc = 0, thcls = 0;
+        for (int i = 0; i < tls; i++) {
+            auto [ty, tx] = touch_list.at(idnt).at(rot).at(i);
+            tx = cd.pat.X + tx;
+            if (tx < 0 || tx >= 10) {
+                thc++;
+                continue;
+            }
 
+            ty = cd.pat.Y - ty - 1;
+            if (ty < 0 || ty >= fh - 1) {
+                thc++;
+                continue;
+            }
+
+            if (gcs.p_field_AI[ty][tx] != 0) {
+                thc++;
+
+                if (tx == 0 || tx == 9) {
+                    //touch = shig::secure_add(touch, 100);
+                }
+
+                continue;
+            }
+            else {
+                if (tx == 0 || tx == 9) {
+                    //touch = shig::secure_add(touch, -100);
+                }
+
+            }
+
+
+            int closure = 0;
+            for (int k = 0; k < cc.size(); k++) {
+                int yk = cc.at(k).first + ty;
+                int xk = cc.at(k).second + tx;
+;
+                if (xk < 0 || xk >= 10) {
+                    closure++;
+                    continue;
+                }
+                if (yk < 0 || yk >= fh - 1) {
+                    closure++;
+                    continue;
+                }
+
+                if (gcs.p_field_AI.at(yk).at(xk) != 0) {
+                    closure++;
+                    continue;
+                }
+                else {
+                    continue;
+                }
+
+            }
+
+            if (closure >= 4) {
+                touch = shig::secure_add(touch, -8000);
+                thcls++;
+            }
+            else {
+                touch = shig::secure_add(touch, -1000 * closure);
+            }
+
+        }
+
+        touch = shig::secure_add(touch, thc * 1000);
+
+        if (thcls == 0) {
+            touch = shig::secure_add(touch, 10000);
+        }
+
+        /*
+        
         shig_rep(i, H) {
             shig_rep(j, W) {
                 if (cd.pat.mino[rot][i][j] == 0)continue;
                 int sX = cd.pat.X + j;
                 if (sX < 0 || sX >= 10)continue;
                 int sY = cd.pat.Y - i - 1;
-                if (sY < 0 || sY >= (gcs.field_AI.size() - 1))continue;
+                if (sY < 0 || sY >= fh - 1)continue;
+
+                for (int k = 0; k < cc.size(); k++) {
+                    int yk = cc.at(k).first  + sY;
+                    int xk = cc.at(k).second + sX;
+
+
+                }
 
                 shig_rep(k, cy.size())shig_rep(l, cx.size()) {
                     if (k == 0 && l == 0)continue;
@@ -1259,13 +1351,12 @@ namespace shig {
 
                     if (gcs.p_field_AI[ssY][ssX] != 0)continue;
 
-                    //*/
                     int closure = 0;
                     shig_rep(m, cc.size()) {
                         int sssX = cd.pat.X + j + cx[k] + cc[m].first;
                         if (sssX < 0 || sssX >= 10) {
-                            closure++;
-                            continue;
+                           closure++;
+                           continue;
                         }
                         int sssY = cd.pat.Y - i - 1 + cy[l] + cc[m].second;
                         if (sssY < 0 || sssY >= (gcs.field_AI.size() - 1)) {
@@ -1275,15 +1366,15 @@ namespace shig {
                         if (gcs.p_field_AI[sssY][sssX] != 0)closure++;
                     }
 
-                    if (closure >= 4)touch -= 2000;
-                    //else touch += 50
-                    //*/
-
+                if (closure >= 4)touch -= 2000;
 
                 }
 
             }
         }
+
+        */
+        
 
         //cmb
         LL cmb_rate = 100;
@@ -1311,18 +1402,21 @@ namespace shig {
         LL ve = 0;
         if (L.size() == 0) {
 
-            if (gcs.height_sum > 96 || gcs.height_mxm > 12) {
-                ve += 50;
+            if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
+                ve += 20;
 
             }
-            else if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+            else if (gcs.height_sum > hs && gcs.height_mxm > hm) {
                 ve += 100;
+                if (cd.pat.id == 6)ve -= 200;
+                else if (cd.pat.id == 1)ve -= 400;
+
             }
             else {
                 ve += 200;
 
-                if (cd.pat.id == 6)ve -= 2000;
-                else if (cd.pat.id == 1)ve -= 100;
+                if (cd.pat.id == 6)ve -= 400;
+                else if (cd.pat.id == 1)ve -= 200;
 
             }
 
@@ -1330,11 +1424,11 @@ namespace shig {
         else if (L.size() == 1) {
             if (gcs.TS_kind == 1) {
 
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
-                    ve += 500;
+                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                    ve += 50000;
                 }
                 else {
-                    ve += -200;
+                    ve += 80000;
                 }
 
                 if (gcs.btb > -1)btbc += 100;
@@ -1342,30 +1436,30 @@ namespace shig {
             }
             else if (gcs.TS_kind == 2) {
 
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
                     ve += 50;
                 }
                 else {
                     ve += -50;
                 }
 
-                if (gcs.btb > -1)btbc += 200;
+                if (gcs.btb > -1)btbc += 50;
             }
             else {
 
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
-                    ve += 200;
+                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                    ve += 400;
                     if (cd.pat.id == 1) {
                         ve += 500;
                     }
                 }
                 else {
-                    ve += -150;
+                    ve += -400;
                     if (cd.pat.id == 6) {
-                        ve += -200;
+                        ve += -1000;
                     }
                     else if (cd.pat.id == 1) {
-                        ve += -300;
+                        ve += -500;
                     }
                 }
 
@@ -1377,13 +1471,13 @@ namespace shig {
             if (gcs.TS_kind == 1) {
 
                 if (gcs.height_sum > hs || gcs.height_mxm > hm) {
-                    ve += 250000000;
+                    ve += 300000;
                 }
                 else {
-                    ve += 3500000000;
+                    ve += 4000000;
                 }
 
-                if (gcs.btb > -1)btbc += 1000000;
+                if (gcs.btb > -1)btbc += 100000;
 
             }
             else if (gcs.TS_kind == 2) {
@@ -1401,7 +1495,7 @@ namespace shig {
                     ve += 5000;
 
                     if (cd.pat.id == 6) {
-                        ve += 100;
+                        ve += 50;
                     }
                     else if (cd.pat.id == 1) {
                         ve += 2000;
@@ -1409,13 +1503,13 @@ namespace shig {
 
                 }
                 else {
-                    ve += -300;
+                    ve += -400;
 
                     if (cd.pat.id == 6) {
-                        ve += -30;
+                        ve += -3000;
                     }
                     else if (cd.pat.id == 1) {
-                        ve += -60;
+                        ve += -600;
                     }
 
                 }
@@ -1431,10 +1525,10 @@ namespace shig {
         else if (L.size() == 3) {
             if (gcs.TS_kind == 1) {
                 if (gcs.height_sum > hs || gcs.height_mxm > hm) {
-                    ve += 3000000;
+                    ve += 300000;
                 }
                 else {
-                    ve += 80000000;
+                    ve += 500000;
                 }
 
                 if (gcs.btb > -1)btbc += 1000;
@@ -1452,11 +1546,11 @@ namespace shig {
                     ve += 700000;
 
                     if (cd.pat.id == 1) {
-                        ve += 50000;
+                        ve += 500000;
                     }
                 }
                 else {
-                    ve += -300;
+                    ve += -200;
                     if (cd.pat.id == 1) {
                         ve += -500;
                     }
@@ -1467,12 +1561,12 @@ namespace shig {
             }
         }
         else if (L.size() == 4) {
-            ve += 400000;
+                ve += 4000000;
             if (gcs.height_sum > hs || gcs.height_mxm > hm) {
                 ve += 2000000;
             }
 
-            if (gcs.btb > -1)btbc += 100;
+            if (gcs.btb > -1)btbc += 1000;
 
         }
 
@@ -1487,11 +1581,11 @@ namespace shig {
         cd.scr.erase = ve;
 
 
-        touch *= 100;
+        touch *= 500;
         //cd.update(touch);
         cd.scr.touch = touch;
 
-        contact *= 200;
+        contact *= 800;
         //cd.update(contact);
         cd.scr.contact = contact;
 
@@ -1501,11 +1595,11 @@ namespace shig {
 
         //cd.update(shigune_AI::gs_BFS(cd, gcs));
         //cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI);
-        if (gcs.height_sum < hs && gcs.height_mxm < hm) {
-            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 200;
+        if (gcs.height_sum < hs || gcs.height_mxm < hm) {
+            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 2500;
         }
         else {
-            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 100;
+            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 1500;
         }
 
         if (gcs.height_sum < hs && gcs.height_mxm < hm) {
@@ -1551,10 +1645,12 @@ namespace shig {
         LL mino_blc = 0;
         LL grbg_blc = 0;
 
-        VVI b_field_AI(41, (VI(10, -1)));
+        const int h_limit = 40;
+
+        VVI b_field_AI(h_limit+1, (VI(10, -1)));
 
         queue<pair<int, int>> xy;
-        xy.push({ 40, 0 });
+        xy.push({ h_limit, 0 });
 
         while (!xy.empty()) {
             pair<int, int> now = xy.front(); xy.pop();
@@ -1565,7 +1661,7 @@ namespace shig {
                 int y = now.first  + cc.at(i).first;
                 int x = now.second + cc.at(i).second;
 
-                if (y < 0 || y >= 25)continue;
+                if (y < 0 || y >= h_limit)continue;
                 else if (x < 0 || x >= 10)continue;
                 else if (qf.at(y).at(x) != 0)continue;
                 else if (b_field_AI.at(y).at(x) != -1)continue;
@@ -1575,7 +1671,7 @@ namespace shig {
 
         }
 
-        for (int i = 0; i < 26; i++) {
+        for (int i = 0; i < h_limit; i++) {
             for (int j = 0; j < 10; j++) {
 
                 if (qf.at(i).at(j) > 0)mino_blc++;
@@ -1585,7 +1681,7 @@ namespace shig {
             }
         }
 
-        LL b_closure = 1000;
+        LL b_closure = 10000;
         if (clos_blc > 0)b_closure = 0;
         b_closure -= 1000 * clos_blc;
         b_closure -= 100 * grbg_blc;
