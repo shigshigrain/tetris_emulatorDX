@@ -4,7 +4,7 @@ int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
 const int branch_num = 20;//branch_num >= 20
-const int cyc_num = 7;//up to 14
+const int cyc_num = 4;//up to 14
 const int fh = 45;
 
 
@@ -1117,7 +1117,7 @@ namespace shig {
                                 contact -= 200;
                             }
                             else {
-                                contact -= 500;
+                                contact -= 5000;
                             }
                         }
                         
@@ -1130,7 +1130,8 @@ namespace shig {
             }
         }
 
-        const LL pnl_A = 3000, pnl_B = -4000, pnl_C = -6000;
+        // contact V2
+        const LL pnl_A = 2000, pnl_B = -1000, pnl_C = -2000;
 
         if (cd.pat.id == 1) {
             if (cd.pat.rot == 0 || cd.pat.rot == 2) {
@@ -1413,7 +1414,7 @@ namespace shig {
 
             }
             else {
-                ve += 200;
+                ve += 300;
 
                 if (cd.pat.id == 6)ve -= 400;
                 else if (cd.pat.id == 1)ve -= 200;
@@ -1585,11 +1586,11 @@ namespace shig {
         //cd.update(touch);
         cd.scr.touch = touch;
 
-        contact *= 800;
+        contact *= 1000;
         //cd.update(contact);
         cd.scr.contact = contact;
 
-        high *= 500;
+        high *= 2500;
         //cd.update(high);
         cd.scr.height = high;
 
