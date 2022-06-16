@@ -1029,7 +1029,8 @@ namespace shig {
 		bool pc_check();
 		void bgn_strategy();
 		void search_way();
-		void search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv, int loop);
+		vector<pair<cmd_pattern, int>> search_way(game_container gc, int loop);
+		void do_sw(vector<pair<cmd_pattern, int>>& ctl, game_container &gc, int loop);
 		cmd_pattern explore_choices(game_container &gc_org);
 		void get_score(cmd_pattern& cd);
 		void get_score(cmd_pattern& cd, game_container& gcs, int loopc);

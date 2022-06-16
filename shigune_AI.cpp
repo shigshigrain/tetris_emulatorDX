@@ -6,6 +6,9 @@ int i32_minus_one = -1;
 const int branch_num = 20;//branch_num >= 20
 const int cyc_num = 4;//up to 14
 const int fh = 45;
+const int thd_num = 5;
+
+std::mutex mtx;
 
 
 //using namespace shig;
@@ -473,10 +476,13 @@ namespace shig {
         return;
     }
 
-    void shigune_AI::search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv, int loop) {
+    vector<pair<cmd_pattern, int>> shigune_AI::search_way(game_container gc, int loop) {
         
         constexpr int mxm = 200;
-        if (gc.current_AI == 0)return;
+        
+        vector<pair<cmd_pattern, int>> pcv(0);
+        
+        if (gc.current_AI == 0)return pcv;
         gc.p_field_AI = gc.field_AI;
         VI rsv(0); rsv.reserve(30);
         VVI search_tree(mxm, rsv);
@@ -570,9 +576,117 @@ namespace shig {
         }
 
 
+        return pcv;
+
+
+    }
+
+    void shigune_AI::do_sw(vector<pair<cmd_pattern, int>>& ctl, game_container &gc, int loop) {
+
+        //vector<pair<cmd_pattern, int>> pcv(0);
+        //pcv.reserve(100);
+        //pcv.emplace_back(search_way(gc, loop));
+
+        constexpr int mxm = 200;
+        vector<pair<cmd_pattern, int>> pcv(0);
+
+        if (gc.current_AI == 0)return;
+        gc.p_field_AI = gc.field_AI;
+        VI rsv(0); rsv.reserve(30);
+        VVI search_tree(mxm, rsv);
+        VI parent_tree(mxm, 0);
+        int to = 0, parent = 0;
+        gc.cp.clear(); gc.cv.clear();
+
+        shig_rep(i, base_cmd.size()) {
+            search_tree[i] = base_cmd[i];
+            parent_tree[i] = i;
+            to++;
+        }
+
+        int w = 0;
+        tetri test;
+        while (!search_tree[w].empty() && (w < mxm - 1)) {
+            bool can = true;
+            int w_size = search_tree[w].size();
+
+
+            if (parent_tree[w] == w) {
+                test.minset(gc.current_AI);
+                shig_rep(i, search_tree[w].size() - 1) {
+                    if (!move_mino(test, search_tree[w][i], gc)) {
+                        can = false;
+                        break;
+                    }
+                }
+                if (!can) {
+                    w++;
+                    continue;
+                }
+                int sft = -1, hd_cnt = 0;
+                while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
+                move_mino(test, 3, gc);
+                cmd_pattern c(test, search_tree[w], parent_tree[w]);
+                decltype(gc.cp)::iterator it = gc.cp.find(c);
+                if (it != gc.cp.end()) {
+                    w++;
+                    continue;
+                }
+                get_score(c, gc, loop);
+                pcv.push_back(make_pair(c, gc.slot_id));
+                gc.cp.insert(c);
+                VI w_sft = search_tree[w];
+                w_sft.pop_back();
+                shig_rep(i, hd_cnt)w_sft.push_back(2);
+                search_tree[to] = w_sft; parent_tree[to] = parent_tree[w]; to++;
+                w++;
+            }
+            else {
+                if (search_tree[w].back() != 3) {
+                    const VI test_case = { 6, 7, 4, 5 };
+                    shig_rep(h, test_case.size()) {
+                        test.minset(gc.current_AI);
+                        can = true;
+                        VI add_tree = search_tree[w];
+                        add_tree.push_back(test_case[h]);
+                        shig_rep(i, add_tree.size()) {
+                            if (!move_mino(test, add_tree[i], gc)) {
+                                can = false;
+                                break;
+                            }
+                        }
+                        if (!can) continue;
+
+                        int sft = -1; int hd_cnt = 0;
+                        while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
+                        move_mino(test, 3, gc);
+                        add_tree.push_back(3);
+                        cmd_pattern c(test, add_tree, w); c.set_isSFT(true);
+                        decltype(gc.cp)::iterator it = gc.cp.find(c);
+                        if (it != gc.cp.end()) continue;
+                        get_score(c, gc, loop);
+                        gc.cp.insert(c);
+                        add_tree.pop_back();
+                        pcv.push_back(make_pair(c, gc.slot_id));
+                        shig_rep(i, hd_cnt)add_tree.push_back(2);
+                        if (to < mxm - 1) {
+                            search_tree[to] = add_tree;
+                            parent_tree[to] = parent_tree[w];
+                            to++;
+                        }
+                    }
+                    w++;
+                }
+                else {
+                    w++;
+                }
+            }
+        }
+
+
+        std::lock_guard<std::mutex> lock(mtx);
+        ctl.emplace_back(pcv);
         return;
-
-
     }
 
     cmd_pattern shigune_AI::explore_choices(game_container& gc_org) {
@@ -586,7 +700,7 @@ namespace shig {
         gc_org.cp.clear(); gc_org.cv.clear();
         //catalog.clear();
         
-        search_way(gc_org, catalog, -1);
+        catalog.emplace_back(search_way(gc_org, -1));
 
         sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return r.first.scr < l.first.scr; });
 
@@ -617,7 +731,34 @@ namespace shig {
         shig_rep(n, exp_cyc_lim - 1) {
             catalog.clear(); catalog.reserve(cls);
 
-            shig_rep(i, expl_width.at(n)) search_way(gc_slot.at(i), catalog, n);
+
+            int loop = n;
+
+            int epwtn = expl_width.at(n);
+            std::vector<std::thread> threads;
+            vector<pair<cmd_pattern, int>> pcata(0);
+
+            for (int i = 0; i < epwtn; i += thd_num) {
+                int rep_num = min((epwtn - i), thd_num);
+                for (int j = 0; j < rep_num; j++) {
+
+                    //std::thread expl(do_sw, catalog, gc_slot.at(i + j), n);
+                    game_container gc = gc_slot.at(i + j);
+
+                    //threads.emplace_back(std::thread(do_sw, gc, loop));
+
+                    threads.emplace_back(std::thread([this, &catalog, &gc, &loop]() {this->do_sw(ref(catalog),ref(gc), loop); }));
+
+                }
+
+                for (auto& thr : threads) {
+                    thr.join();
+                }
+
+
+            }
+
+
             sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return r.first.scr < l.first.scr; });
             vector<game_container> proxy_slot(expl_width.at(n));
             vector<vector<cmd_pattern>> proxy_branch(expl_width.at(n), vector<cmd_pattern>(0));
