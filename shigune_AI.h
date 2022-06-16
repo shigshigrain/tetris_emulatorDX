@@ -38,7 +38,7 @@ const vector<pairI2> cc = {
 	{0, -1}
 };
 
-const vector<int> expl_width = { 20, 20, 15, 15, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
+
 
 const vector<int> scr_rate = { 100, 95, 95, 95, 90, 90, 90, 90 ,80, 80, 80, 70, 70, 70 ,60, 60, 60, 50, 50, 50 };
 
@@ -775,6 +775,8 @@ struct cmd_score {
 
 };
 
+
+/*
 struct cmd_pattern {
 	LL score = 1000000000;
 	cmd_score scr;
@@ -831,6 +833,8 @@ struct cmd_pattern {
 	}
 
 };
+
+*/
 
 struct strategy {
 	int id = 0;
@@ -934,6 +938,38 @@ struct tetriplate {
 
 namespace shig {
 
+	class cmd_pattern {
+
+	public:
+		LL score;
+		cmd_score scr;
+		int index;
+		int srs;
+		int kind;
+		int ttrp_f;
+		int pre_gc;
+		bool isSFT;
+		VI cmd_list;
+		tetri pat;
+
+	public:
+		cmd_pattern();
+		cmd_pattern(const tetri& p, const VI& list, const int& d);
+
+		void update();
+
+		void update(LL u);
+
+		void set_ttrpF(int& sf);
+
+		void set_isSFT(const bool& sf);
+
+		void set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k);
+
+		void set_ts(int r, int k);
+
+	};
+
 	class game_container
 	{
 	public:
@@ -1029,8 +1065,8 @@ namespace shig {
 		bool pc_check();
 		void bgn_strategy();
 		void search_way();
-		vector<pair<cmd_pattern, int>> search_way(game_container gc, int loop);
-		void do_sw(vector<pair<cmd_pattern, int>>& ctl, game_container &gc, int loop);
+		vector<cmd_pattern> search_way(game_container gc, int loop);
+		void do_sw(vector<cmd_pattern> &ctl, game_container gc, int loop);
 		cmd_pattern explore_choices(game_container &gc_org);
 		void get_score(cmd_pattern& cd);
 		void get_score(cmd_pattern& cd, game_container& gcs, int loopc);

@@ -3,8 +3,9 @@
 int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
-const int branch_num = 20;//branch_num >= 20
-const int cyc_num = 4;//up to 14
+const int branch_num = 30;//branch_num >= 20
+const vector<int> expl_width = { 30, 30, 25, 25, 20, 20, 15, 15, 10, 10, 10, 10, 10, 10, 10 };
+const int cyc_num = 6;//up to 14
 const int fh = 45;
 const int thd_num = 5;
 
@@ -16,6 +17,63 @@ std::mutex mtx;
 namespace shig {
 
     //
+
+    cmd_pattern::cmd_pattern() {
+        score = 1000000000;
+        scr = cmd_score();
+        index = -1;
+        srs = 0, kind = 0;
+        ttrp_f = -1;
+        pre_gc = 0;
+        isSFT = false;
+        cmd_list = {};
+        pat = tetri();
+    }
+
+    cmd_pattern::cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
+
+    void cmd_pattern::update() {
+        score += scr.get_sum();
+        return;
+    }
+
+    void cmd_pattern::update(LL u) {
+        score += u;
+        return;
+    }
+
+    void cmd_pattern::set_ttrpF(int& sf) {
+        ttrp_f = sf;
+    }
+
+    void cmd_pattern::set_isSFT(const bool& sf) {
+        isSFT = sf;
+    }
+
+    void cmd_pattern::set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k) {
+        score = s;
+        pat = p;
+        cmd_list = list;
+        index = d;
+        srs = r;
+        kind = k;
+        //d_line = l;
+    }
+
+    void cmd_pattern::set_ts(int r, int k) {
+        srs = r;
+        kind = k;
+        return;
+    }
+
+    bool operator < (const cmd_pattern& a, const cmd_pattern& b) {
+        return (a.pat < b.pat);
+    }
+
+    bool operator == (const cmd_pattern& a, const cmd_pattern& b) {
+        return (a.pat == b.pat);
+    }
+
 
     game_container::game_container() {
 
@@ -476,11 +534,11 @@ namespace shig {
         return;
     }
 
-    vector<pair<cmd_pattern, int>> shigune_AI::search_way(game_container gc, int loop) {
+    vector<cmd_pattern> shigune_AI::search_way(game_container gc, int loop) {
         
         constexpr int mxm = 200;
         
-        vector<pair<cmd_pattern, int>> pcv(0);
+        vector<cmd_pattern> pcv(0);
         
         if (gc.current_AI == 0)return pcv;
         gc.p_field_AI = gc.field_AI;
@@ -525,7 +583,8 @@ namespace shig {
                     continue;
                 }
                 get_score(c, gc, loop);
-                pcv.push_back(make_pair(c, gc.slot_id));
+                c.pre_gc = gc.slot_id;
+                pcv.push_back(c);
                 gc.cp.insert(c);
                 VI w_sft = search_tree[w];
                 w_sft.pop_back();
@@ -559,7 +618,8 @@ namespace shig {
                         get_score(c, gc, loop);
                         gc.cp.insert(c);
                         add_tree.pop_back();
-                        pcv.push_back(make_pair(c, gc.slot_id));
+                        c.pre_gc = gc.slot_id;
+                        pcv.push_back(c);
                         shig_rep(i, hd_cnt)add_tree.push_back(2);
                         if (to < mxm - 1) {
                             search_tree[to] = add_tree;
@@ -581,14 +641,14 @@ namespace shig {
 
     }
 
-    void shigune_AI::do_sw(vector<pair<cmd_pattern, int>>& ctl, game_container &gc, int loop) {
+    void shigune_AI::do_sw(vector<cmd_pattern> &ctl, game_container gc, int loop) {
 
         //vector<pair<cmd_pattern, int>> pcv(0);
         //pcv.reserve(100);
         //pcv.emplace_back(search_way(gc, loop));
 
         constexpr int mxm = 200;
-        vector<pair<cmd_pattern, int>> pcv(0);
+        vector<cmd_pattern> pcv(0);
 
         if (gc.current_AI == 0)return;
         gc.p_field_AI = gc.field_AI;
@@ -633,7 +693,8 @@ namespace shig {
                     continue;
                 }
                 get_score(c, gc, loop);
-                pcv.push_back(make_pair(c, gc.slot_id));
+                c.pre_gc = gc.slot_id;
+                pcv.push_back(c);
                 gc.cp.insert(c);
                 VI w_sft = search_tree[w];
                 w_sft.pop_back();
@@ -667,7 +728,8 @@ namespace shig {
                         get_score(c, gc, loop);
                         gc.cp.insert(c);
                         add_tree.pop_back();
-                        pcv.push_back(make_pair(c, gc.slot_id));
+                        c.pre_gc = gc.slot_id;
+                        pcv.push_back(c);
                         shig_rep(i, hd_cnt)add_tree.push_back(2);
                         if (to < mxm - 1) {
                             search_tree[to] = add_tree;
@@ -685,7 +747,10 @@ namespace shig {
 
 
         std::lock_guard<std::mutex> lock(mtx);
-        ctl.emplace_back(pcv);
+        for (cmd_pattern p : pcv) {
+            ctl.push_back(p);
+        }
+        
         return;
     }
 
@@ -693,25 +758,27 @@ namespace shig {
 
         gc_slot = vector<game_container>(branch_num);
         vector<vector<cmd_pattern>> branch(branch_num, vector<cmd_pattern>(0));
-        vector<pair<cmd_pattern, int>> catalog(0);
+        vector<cmd_pattern> catalog(0);
         constexpr int cls = 100 * branch_num;
         catalog.reserve(cls);
 
         gc_org.cp.clear(); gc_org.cv.clear();
         //catalog.clear();
         
-        catalog.emplace_back(search_way(gc_org, -1));
+        //catalog.emplace_back(search_way(gc_org, -1));
+        do_sw(ref(catalog), gc_org, -1);
 
-        sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return r.first.scr < l.first.scr; });
+        sort(all(catalog), [&](const cmd_pattern &l, const cmd_pattern &r) { return r.scr < l.scr; });
 
         if (catalog.size() == 0) {
             return null_cmd;
         }
         else if (catalog.size() < branch_num && catalog.size() > 0) {
             for (int i = 0; i < catalog.size(); i++) {
-                auto [pct, ci] = catalog.at(i);
-                branch.at(i).push_back(pct);
-                gc_slot.at(i) = update_gc(pct, gc_org);
+                //auto [pct, ci] = catalog.at(i);
+
+                branch.at(i).push_back(catalog.at(i));
+                gc_slot.at(i) = update_gc(catalog.at(i), gc_org);
                 gc_slot.at(i).slot_id = i;
             }
             for (int i = catalog.size(); i < branch_num; i++) {
@@ -721,9 +788,9 @@ namespace shig {
         }
         else {
             shig_rep(i, branch_num) {
-                auto [pct, ci] = catalog.at(i);
-                branch.at(i).push_back(pct);
-                gc_slot.at(i) = update_gc(pct, gc_org);
+                //auto [pct, ci] = catalog.at(i);
+                branch.at(i).push_back(catalog.at(i));
+                gc_slot.at(i) = update_gc(catalog.at(i), gc_org);
                 gc_slot.at(i).slot_id = i;
             }
         }
@@ -736,8 +803,8 @@ namespace shig {
 
             int epwtn = expl_width.at(n);
             std::vector<std::thread> threads;
-            vector<pair<cmd_pattern, int>> pcata(0);
 
+            /*
             for (int i = 0; i < epwtn; i += thd_num) {
                 int rep_num = min((epwtn - i), thd_num);
                 for (int j = 0; j < rep_num; j++) {
@@ -747,19 +814,28 @@ namespace shig {
 
                     //threads.emplace_back(std::thread(do_sw, gc, loop));
 
-                    threads.emplace_back(std::thread([this, &catalog, &gc, &loop]() {this->do_sw(ref(catalog),ref(gc), loop); }));
+                    threads.emplace_back(std::thread([this, &catalog, gc, loop]() {this->do_sw(ref(catalog), gc, loop); }));
 
                 }
 
                 for (auto& thr : threads) {
                     thr.join();
                 }
+                threads.clear();
+            }
+            */
 
+            for (int i = 0; i < epwtn; i++) {
+                game_container gc = gc_slot.at(i);
+                threads.emplace_back(std::thread([this, &catalog, gc, loop]() {this->do_sw(ref(catalog), gc, loop); }));
+            }
 
+            for (auto& thr : threads) {
+                thr.join();
             }
 
 
-            sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return r.first.scr < l.first.scr; });
+            sort(all(catalog), [&](const cmd_pattern &l, const cmd_pattern &r) { return r.scr < l.scr; });
             vector<game_container> proxy_slot(expl_width.at(n));
             vector<vector<cmd_pattern>> proxy_branch(expl_width.at(n), vector<cmd_pattern>(0));
             shig_rep(i, expl_width.at(n)) {
@@ -769,10 +845,11 @@ namespace shig {
                     proxy_slot.at(i).slot_id = i;
                 }
                 else {
-                    auto [pct, ci] = catalog.at(i);
+                    //auto [pct, ci] = catalog.at(i);
+                    int ci = catalog.at(i).pre_gc;
                     proxy_branch.at(i) = branch.at(ci);
-                    proxy_branch.at(i).push_back(pct);
-                    proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
+                    proxy_branch.at(i).push_back(catalog.at(i));
+                    proxy_slot.at(i) = update_gc(catalog.at(i), gc_slot.at(ci));
                     proxy_slot.at(i).slot_id = i;
                 }
                 
@@ -783,8 +860,8 @@ namespace shig {
         }
 
         if (catalog.size() == 0)return null_cmd;
-        auto [r, ri] = catalog.at(0);
-        
+        //auto [r, ri] = catalog.at(0);
+        int ri = catalog.at(0).pre_gc;
         return branch.at(ri).front();
 
 
@@ -1545,20 +1622,20 @@ namespace shig {
         if (L.size() == 0) {
 
             if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
-                ve += 20;
+                ve += 50;
 
             }
             else if (gcs.height_sum > hs && gcs.height_mxm > hm) {
-                ve += 100;
+                ve += 150;
                 if (cd.pat.id == 6)ve -= 200;
                 else if (cd.pat.id == 1)ve -= 400;
 
             }
             else {
-                ve += 300;
+                ve += 400;
 
-                if (cd.pat.id == 6)ve -= 400;
-                else if (cd.pat.id == 1)ve -= 200;
+                if (cd.pat.id == 6)ve -= 500;
+                else if (cd.pat.id == 1)ve -= 500;
 
             }
 
@@ -1714,7 +1791,7 @@ namespace shig {
 
         //fusion *= 100; cd.update(fusion);
 
-        LL ve_rate = 1000;
+        LL ve_rate = 500;
         if (gcs.height_sum > hs || gcs.height_mxm > hm) {
             ve_rate *= 100;
         }
@@ -1731,7 +1808,7 @@ namespace shig {
         //cd.update(contact);
         cd.scr.contact = contact;
 
-        high *= 2500;
+        high *= 5000;
         //cd.update(high);
         cd.scr.height = high;
 
