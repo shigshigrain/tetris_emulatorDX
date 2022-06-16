@@ -659,7 +659,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //*/
 
     Window window;
-    window.Create("tetris_emulator_ver3.6.2", "DXlib");
+    window.Create("tetris_emulator_ver3.7.0", "DXlib");
     SetUserWindow(window.GetHandle());
     SetUserWindowMessageProcessDXLibFlag(false);
     SetGraphMode(1200, 800, 32);
