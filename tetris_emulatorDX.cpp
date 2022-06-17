@@ -325,6 +325,9 @@ void run_game() {
             return;
         }
 
+        DINPUT_JOYSTATE DIS;
+        int err = GetJoypadDirectInputState(DX_INPUT_PAD1, &DIS);
+
         int pad_sts = GetJoypadInputState(DX_INPUT_PAD1);
         //int key_sts = GetJoypadInputState(DX_INPUT_KEY);
         KeyBuf[KEY_INPUT_LEFT] |= (pad_sts & PAD_INPUT_LEFT);
@@ -337,14 +340,17 @@ void run_game() {
         KeyBuf[KEY_INPUT_R] |= (pad_sts & PAD_INPUT_9);
         int Xbuf = 0, Ybuf = 0;
         
-        int err = GetJoypadAnalogInput(&Xbuf, &Ybuf, DX_INPUT_PAD1);
-        if (Ybuf <= -650) {
+        //int err = GetJoypadAnalogInput(&Xbuf, &Ybuf, DX_INPUT_PAD1);
+        
+        
+        
+        if (DIS.Y <= -650) {
             KeyBuf[KEY_INPUT_DOWN] |= 1;
         }
-        if (Xbuf <= -650) {
+        if (DIS.X <= -650) {
             KeyBuf[KEY_INPUT_LEFT] |= 1;
         }
-        if (Ybuf >= 650) {
+        if (DIS.X >= 650) {
             KeyBuf[KEY_INPUT_RIGHT] |= 1;
         }
 
