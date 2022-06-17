@@ -1808,7 +1808,7 @@ namespace shig {
         //cd.update(contact);
         cd.scr.contact = contact;
 
-        high *= 5000;
+        high *= 3500;
         //cd.update(high);
         cd.scr.height = high;
 

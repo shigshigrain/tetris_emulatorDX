@@ -72,7 +72,7 @@ public:
         windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
         RegisterClass(&windowClass);
         // ウィンドウを生成する
-        windowHandle = CreateWindowEx(0, className.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW, 50, 50, 1200, 800, NULL, NULL, GetModuleHandle(NULL), NULL);
+        windowHandle = CreateWindowEx(0, className.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW, 50, 50, 1536, 800, NULL, NULL, GetModuleHandle(NULL), NULL);
 
     }
 
@@ -662,7 +662,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     window.Create("tetris_emulator_ver3.7.0", "DXlib");
     SetUserWindow(window.GetHandle());
     SetUserWindowMessageProcessDXLibFlag(false);
-    SetGraphMode(1200, 800, 32);
+    SetGraphMode(1920, 1000, 32); // FHD時、↑30px,↓50pxがリボン
     if (DXLibError(DxLib_Init())) return dxLibError;
     window.Show();
 
@@ -682,7 +682,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Gr_mino[13] = LoadGraph(_T("tex\\S-mino_90.bmp"));
     Gr_mino[14] = LoadGraph(_T("tex\\T-mino_90.bmp"));
     Gr_mino[15] = LoadGraph(_T("tex\\Z-mino_90.bmp"));
-    BG_hndl = LoadGraph(_T("tex\\tetris_emulator_background01.bmp"));
+    BG_hndl = LoadGraph(_T("tex\\tetris_emulator_background02.bmp"));
 
 
     DxLib::SetMouseDispFlag(TRUE);
