@@ -13,6 +13,7 @@
 #include <set>
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include <memory>
 #include <type_traits>
 #include <limits>

@@ -72,7 +72,7 @@ public:
         windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
         RegisterClass(&windowClass);
         // ウィンドウを生成する
-        windowHandle = CreateWindowEx(0, className.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW, 50, 50, 1200, 800, NULL, NULL, GetModuleHandle(NULL), NULL);
+        windowHandle = CreateWindowEx(0, className.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW, 50, 50, 1536, 800, NULL, NULL, GetModuleHandle(NULL), NULL);
 
     }
 
@@ -114,6 +114,7 @@ void act_ref(int i, VI& check) {
 void show_game_state() {
 
     VI state = get_game_state();
+    int pad_num = GetJoypadNum();
 
     unsigned int Color = GetColor(0, 0, 0);
     DrawFormatString(20, 200, Color, "hold_f =  %d", state[0]);
@@ -129,10 +130,7 @@ void show_game_state() {
     DrawFormatString(20, 320, Color, "p_srs =  %d", state[10]);
     DrawFormatString(20, 332, Color, "btb =  %d", state[11]);
     DrawFormatString(20, 344, Color, "combo =  %d", state[12]);
-
-
-
-
+    DrawFormatString(20, 600, Color, "pad_num : %d", pad_num);
 
     return;
 }
@@ -327,9 +325,58 @@ void run_game() {
             return;
         }
 
+        GetHitKeyStateAll(KeyBuf);
+
+        DINPUT_JOYSTATE DIS;
+        int err = GetJoypadDirectInputState(DX_INPUT_PAD1, &DIS);
+
+        int pad_sts = GetJoypadInputState(DX_INPUT_PAD1);
+        //int key_sts = GetJoypadInputState(DX_INPUT_KEY);
+
+        if (DIS.POV[0] == 22500 || DIS.POV[0] == 27000 || DIS.POV[0] == 31500) {
+            KeyBuf[KEY_INPUT_LEFT] = 1;
+        }
+        if (DIS.POV[0] == 4500 || DIS.POV[0] == 9000 || DIS.POV[0] == 13500) {
+            KeyBuf[KEY_INPUT_RIGHT] = 1;
+        }
+        if (DIS.POV[0] == 13500 || DIS.POV[0] == 18000 || DIS.POV[0] == 22500) {
+            KeyBuf[KEY_INPUT_DOWN] = 1;
+        }
+        if (DIS.Buttons[1] == 128) {
+            KeyBuf[KEY_INPUT_SPACE] = 1;
+        }
+        if (DIS.Buttons[5] == 128 || DIS.Buttons[7] == 128) {
+            KeyBuf[KEY_INPUT_UP] = 1;
+        }
+        if (DIS.Buttons[4] == 128 || DIS.Buttons[6] == 128) {
+            KeyBuf[KEY_INPUT_Z] = 1;
+        }
+        if (DIS.Buttons[0] == 128) {
+            KeyBuf[KEY_INPUT_C] = 1;
+        }
+        if (DIS.Buttons[8] == 128) {
+            KeyBuf[KEY_INPUT_R] = 1;
+        }
+        if (DIS.Buttons[12] == 128) {
+            KeyBuf[KEY_INPUT_ESCAPE] = 1;
+        }
+
+        //int Xbuf = 0, Ybuf = 0;
+        //int err = GetJoypadAnalogInput(&Xbuf, &Ybuf, DX_INPUT_PAD1);
+        
+        if (DIS.Y >= 710) {
+            KeyBuf[KEY_INPUT_DOWN] = 1;
+        }
+        if (DIS.X <= -710) {
+            KeyBuf[KEY_INPUT_LEFT] = 1;
+        }
+        if (DIS.X >= 710) {
+            KeyBuf[KEY_INPUT_RIGHT] = 1;
+        }
+
         bool any_put = false;
 
-        GetHitKeyStateAll(KeyBuf);
+        
 
         if (KeyBuf[KEY_INPUT_R]) {
             show_field(0);
@@ -659,10 +706,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //*/
 
     Window window;
-    window.Create("tetris_emulator_ver3.6.2", "DXlib");
+    window.Create("tetris_emulator_ver3.7.1", "DXlib");
     SetUserWindow(window.GetHandle());
     SetUserWindowMessageProcessDXLibFlag(false);
-    SetGraphMode(1200, 800, 32);
+    SetGraphMode(1920, 1000, 32); // FHD時、↑30px,↓50pxがリボン
     if (DXLibError(DxLib_Init())) return dxLibError;
     window.Show();
 
@@ -682,7 +729,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Gr_mino[13] = LoadGraph(_T("tex\\S-mino_90.bmp"));
     Gr_mino[14] = LoadGraph(_T("tex\\T-mino_90.bmp"));
     Gr_mino[15] = LoadGraph(_T("tex\\Z-mino_90.bmp"));
-    BG_hndl = LoadGraph(_T("tex\\tetris_emulator_background01.bmp"));
+    BG_hndl = LoadGraph(_T("tex\\tetris_emulator_background02.bmp"));
 
 
     DxLib::SetMouseDispFlag(TRUE);
@@ -701,7 +748,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // メッセージループに代わる処理をする
         //if (ProcessMessage() == -1)break;
 
-        if (CheckHitKey(KEY_INPUT_ESCAPE)) {
+        DINPUT_JOYSTATE DIS;
+        int err = GetJoypadDirectInputState(DX_INPUT_PAD1, &DIS);
+        GetHitKeyStateAll(KeyBuf);
+
+        int pad_sts = GetJoypadInputState(DX_INPUT_PAD1);
+        //int key_sts = GetJoypadInputState(DX_INPUT_KEY);
+
+        if (DIS.POV[0] == 22500 || DIS.POV[0] == 27000 || DIS.POV[0] == 31500) {
+            KeyBuf[KEY_INPUT_LEFT] = 1;
+        }
+        if (DIS.POV[0] == 4500 || DIS.POV[0] == 9000 || DIS.POV[0] == 13500) {
+            KeyBuf[KEY_INPUT_RIGHT] = 1;
+        }
+        if (DIS.POV[0] == 13500 || DIS.POV[0] == 18000 || DIS.POV[0] == 22500) {
+            KeyBuf[KEY_INPUT_DOWN] = 1;
+        }
+        if (DIS.Buttons[1] == 128) {
+            KeyBuf[KEY_INPUT_SPACE] = 1;
+        }
+        if (DIS.Buttons[5] == 128 || DIS.Buttons[7] == 128) {
+            KeyBuf[KEY_INPUT_UP] = 1;
+        }
+        if (DIS.Buttons[4] == 128 || DIS.Buttons[6] == 128) {
+            KeyBuf[KEY_INPUT_Z] = 1;
+        }
+        if (DIS.Buttons[0] == 128) {
+            KeyBuf[KEY_INPUT_C] = 1;
+        }
+        if (DIS.Buttons[8] == 128) {
+            KeyBuf[KEY_INPUT_R] = 1;
+        }
+        if (DIS.Buttons[12] == 128) {
+            KeyBuf[KEY_INPUT_ESCAPE] = 1;
+        }
+
+        if (KeyBuf[KEY_INPUT_ESCAPE]) {
             break;
             g_event = -1;
         }

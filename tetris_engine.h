@@ -31,7 +31,9 @@ struct tetri {
     int id = 0;
     int px_size = 30;
     
-    tetri() {};
+    tetri() {
+        minset(6);
+    };
     tetri(int rot, int X, int Y, int id) : rot(rot), X(X), Y(Y), id(id) {};
 
     VVVI mino;

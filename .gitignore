@@ -361,5 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+<<<<<<< HEAD
 /tex/tetris_emulator_background02.bmp
+=======
+>>>>>>> 1fb2925595aadf6dd9df1eff047f2082249363a0
 /pad_conf.txt
