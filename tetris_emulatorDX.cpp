@@ -72,7 +72,7 @@ public:
         windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
         RegisterClass(&windowClass);
         // ウィンドウを生成する
-        windowHandle = CreateWindowEx(0, className.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW, 50, 50, 1200, 800, NULL, NULL, GetModuleHandle(NULL), NULL);
+        windowHandle = CreateWindowEx(0, className.c_str(), title.c_str(), WS_OVERLAPPEDWINDOW, 50, 50, 1536, 800, NULL, NULL, GetModuleHandle(NULL), NULL);
 
     }
 
@@ -114,6 +114,7 @@ void act_ref(int i, VI& check) {
 void show_game_state() {
 
     VI state = get_game_state();
+    int pad_num = GetJoypadNum();
 
     unsigned int Color = GetColor(0, 0, 0);
     DrawFormatString(20, 200, Color, "hold_f =  %d", state[0]);
@@ -129,10 +130,7 @@ void show_game_state() {
     DrawFormatString(20, 320, Color, "p_srs =  %d", state[10]);
     DrawFormatString(20, 332, Color, "btb =  %d", state[11]);
     DrawFormatString(20, 344, Color, "combo =  %d", state[12]);
-
-
-
-
+    DrawFormatString(20, 600, Color, "pad_num : %d", pad_num);
 
     return;
 }
@@ -325,6 +323,29 @@ void run_game() {
         if (delay_cnt > 0) {
             delay_cnt--;
             return;
+        }
+
+        int pad_sts = GetJoypadInputState(DX_INPUT_PAD1);
+        //int key_sts = GetJoypadInputState(DX_INPUT_KEY);
+        KeyBuf[KEY_INPUT_LEFT] |= (pad_sts & PAD_INPUT_LEFT);
+        KeyBuf[KEY_INPUT_RIGHT] |= (pad_sts & PAD_INPUT_RIGHT);
+        KeyBuf[KEY_INPUT_UP] |= ((pad_sts & PAD_INPUT_6) | (pad_sts & PAD_INPUT_8));
+        KeyBuf[KEY_INPUT_DOWN] |= (pad_sts & PAD_INPUT_DOWN);
+        KeyBuf[KEY_INPUT_SPACE] |= (pad_sts & PAD_INPUT_2);// A_key
+        KeyBuf[KEY_INPUT_C] |= (pad_sts & PAD_INPUT_1);
+        KeyBuf[KEY_INPUT_Z] |= ((pad_sts & PAD_INPUT_5) | (pad_sts & PAD_INPUT_7));
+        KeyBuf[KEY_INPUT_R] |= (pad_sts & PAD_INPUT_9);
+        int Xbuf = 0, Ybuf = 0;
+        
+        int err = GetJoypadAnalogInput(&Xbuf, &Ybuf, DX_INPUT_PAD1);
+        if (Ybuf <= -650) {
+            KeyBuf[KEY_INPUT_DOWN] |= 1;
+        }
+        if (Xbuf <= -650) {
+            KeyBuf[KEY_INPUT_LEFT] |= 1;
+        }
+        if (Ybuf >= 650) {
+            KeyBuf[KEY_INPUT_RIGHT] |= 1;
         }
 
         bool any_put = false;
@@ -659,10 +680,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //*/
 
     Window window;
-    window.Create("tetris_emulator_ver3.6.2", "DXlib");
+    window.Create("tetris_emulator_ver3.7.1", "DXlib");
     SetUserWindow(window.GetHandle());
     SetUserWindowMessageProcessDXLibFlag(false);
-    SetGraphMode(1200, 800, 32);
+    SetGraphMode(1920, 1000, 32); // FHD時、↑30px,↓50pxがリボン
     if (DXLibError(DxLib_Init())) return dxLibError;
     window.Show();
 
@@ -682,7 +703,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Gr_mino[13] = LoadGraph(_T("tex\\S-mino_90.bmp"));
     Gr_mino[14] = LoadGraph(_T("tex\\T-mino_90.bmp"));
     Gr_mino[15] = LoadGraph(_T("tex\\Z-mino_90.bmp"));
-    BG_hndl = LoadGraph(_T("tex\\tetris_emulator_background01.bmp"));
+    BG_hndl = LoadGraph(_T("tex\\tetris_emulator_background02.bmp"));
 
 
     DxLib::SetMouseDispFlag(TRUE);

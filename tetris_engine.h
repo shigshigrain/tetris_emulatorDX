@@ -1,16 +1,7 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <queue>
-#include <random>
-#include <set>
-#include <chrono>
-#include <thread>
-#include <immintrin.h>
+#include "shig_utility.h"
+
 
 using namespace std;
 //using namespace shig;
@@ -40,7 +31,9 @@ struct tetri {
     int id = 0;
     int px_size = 30;
     
-    tetri() {};
+    tetri() {
+        minset(6);
+    };
     tetri(int rot, int X, int Y, int id) : rot(rot), X(X), Y(Y), id(id) {};
 
     VVVI mino;

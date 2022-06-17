@@ -3,9 +3,13 @@
 int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
-const int branch_num = 12;
-const int cyc_num = 7;
+const int branch_num = 30;//branch_num >= 20
+const vector<int> expl_width = { 30, 30, 25, 25, 20, 20, 15, 15, 10, 10, 10, 10, 10, 10, 10 };
+const int cyc_num = 6;//up to 14
 const int fh = 45;
+const int thd_num = 5;
+
+std::mutex mtx;
 
 
 //using namespace shig;
@@ -13,6 +17,63 @@ const int fh = 45;
 namespace shig {
 
     //
+
+    cmd_pattern::cmd_pattern() {
+        score = 1000000000;
+        scr = cmd_score();
+        index = -1;
+        srs = 0, kind = 0;
+        ttrp_f = -1;
+        pre_gc = 0;
+        isSFT = false;
+        cmd_list = {};
+        pat = tetri();
+    }
+
+    cmd_pattern::cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
+
+    void cmd_pattern::update() {
+        score += scr.get_sum();
+        return;
+    }
+
+    void cmd_pattern::update(LL u) {
+        score += u;
+        return;
+    }
+
+    void cmd_pattern::set_ttrpF(int& sf) {
+        ttrp_f = sf;
+    }
+
+    void cmd_pattern::set_isSFT(const bool& sf) {
+        isSFT = sf;
+    }
+
+    void cmd_pattern::set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k) {
+        score = s;
+        pat = p;
+        cmd_list = list;
+        index = d;
+        srs = r;
+        kind = k;
+        //d_line = l;
+    }
+
+    void cmd_pattern::set_ts(int r, int k) {
+        srs = r;
+        kind = k;
+        return;
+    }
+
+    bool operator < (const cmd_pattern& a, const cmd_pattern& b) {
+        return (a.pat < b.pat);
+    }
+
+    bool operator == (const cmd_pattern& a, const cmd_pattern& b) {
+        return (a.pat == b.pat);
+    }
+
 
     game_container::game_container() {
 
@@ -92,6 +153,7 @@ namespace shig {
         field_AI = sf[0];
         p_field_AI = sf[1];
         strategy_map = sf[2];
+        return true;
     }
 
     bool game_container::set_gc_ttrp(const tetriplate& st) {
@@ -188,8 +250,7 @@ namespace shig {
 
         set_gc(now_gc);
 
-        cmd_pattern select = explore_choices(now_gc); //Vƒ‹[ƒv’Tõ
-        //search_way(); // ‹ŒˆêŽè’Tõ
+        cmd_pattern select = explore_choices(now_gc);
         
         /*
         if (cp.size() == 0)return VI({3});
@@ -221,19 +282,6 @@ namespace shig {
         bool all_TF = next_crr_check();
 
         shigune_AI::ttrp_check(select, els, mnL);
-
-
-        /*
-       int rnd_decision = get_rnd(0, cp.size()-1);
-       decltype(cp)::iterator d_itr = cp.begin();
-       shig_rep(i, rnd_decision) {
-           ++d_itr;
-       }
-       if (d_itr == cp.end())d_itr--;
-
-       auto d = *d_itr;
-       VI cmd = d.cmd_list;
-       */
 
 		return select.cmd_list;
 	}
@@ -486,10 +534,13 @@ namespace shig {
         return;
     }
 
-    void shigune_AI::search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv) {
+    vector<cmd_pattern> shigune_AI::search_way(game_container gc, int loop) {
         
-        constexpr int mxm = 300;
-        if (gc.current_AI == 0)return;
+        constexpr int mxm = 200;
+        
+        vector<cmd_pattern> pcv(0);
+        
+        if (gc.current_AI == 0)return pcv;
         gc.p_field_AI = gc.field_AI;
         VI rsv(0); rsv.reserve(30);
         VVI search_tree(mxm, rsv);
@@ -531,8 +582,9 @@ namespace shig {
                     w++;
                     continue;
                 }
-                get_score(c, gc);
-                pcv.push_back(make_pair(c, gc.slot_id));
+                get_score(c, gc, loop);
+                c.pre_gc = gc.slot_id;
+                pcv.push_back(c);
                 gc.cp.insert(c);
                 VI w_sft = search_tree[w];
                 w_sft.pop_back();
@@ -563,10 +615,11 @@ namespace shig {
                         cmd_pattern c(test, add_tree, w); c.set_isSFT(true);
                         decltype(gc.cp)::iterator it = gc.cp.find(c);
                         if (it != gc.cp.end()) continue;
-                        get_score(c, gc);
+                        get_score(c, gc, loop);
                         gc.cp.insert(c);
                         add_tree.pop_back();
-                        pcv.push_back(make_pair(c, gc.slot_id));
+                        c.pre_gc = gc.slot_id;
+                        pcv.push_back(c);
                         shig_rep(i, hd_cnt)add_tree.push_back(2);
                         if (to < mxm - 1) {
                             search_tree[to] = add_tree;
@@ -583,58 +636,220 @@ namespace shig {
         }
 
 
-        return;
+        return pcv;
 
 
     }
 
+    void shigune_AI::do_sw(vector<cmd_pattern> &ctl, game_container gc, int loop) {
+
+        //vector<pair<cmd_pattern, int>> pcv(0);
+        //pcv.reserve(100);
+        //pcv.emplace_back(search_way(gc, loop));
+
+        constexpr int mxm = 200;
+        vector<cmd_pattern> pcv(0);
+
+        if (gc.current_AI == 0)return;
+        gc.p_field_AI = gc.field_AI;
+        VI rsv(0); rsv.reserve(30);
+        VVI search_tree(mxm, rsv);
+        VI parent_tree(mxm, 0);
+        int to = 0, parent = 0;
+        gc.cp.clear(); gc.cv.clear();
+
+        shig_rep(i, base_cmd.size()) {
+            search_tree[i] = base_cmd[i];
+            parent_tree[i] = i;
+            to++;
+        }
+
+        int w = 0;
+        tetri test;
+        while (!search_tree[w].empty() && (w < mxm - 1)) {
+            bool can = true;
+            int w_size = search_tree[w].size();
+
+
+            if (parent_tree[w] == w) {
+                test.minset(gc.current_AI);
+                shig_rep(i, search_tree[w].size() - 1) {
+                    if (!move_mino(test, search_tree[w][i], gc)) {
+                        can = false;
+                        break;
+                    }
+                }
+                if (!can) {
+                    w++;
+                    continue;
+                }
+                int sft = -1, hd_cnt = 0;
+                while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
+                move_mino(test, 3, gc);
+                cmd_pattern c(test, search_tree[w], parent_tree[w]);
+                decltype(gc.cp)::iterator it = gc.cp.find(c);
+                if (it != gc.cp.end()) {
+                    w++;
+                    continue;
+                }
+                get_score(c, gc, loop);
+                c.pre_gc = gc.slot_id;
+                pcv.push_back(c);
+                gc.cp.insert(c);
+                VI w_sft = search_tree[w];
+                w_sft.pop_back();
+                shig_rep(i, hd_cnt)w_sft.push_back(2);
+                search_tree[to] = w_sft; parent_tree[to] = parent_tree[w]; to++;
+                w++;
+            }
+            else {
+                if (search_tree[w].back() != 3) {
+                    const VI test_case = { 6, 7, 4, 5 };
+                    shig_rep(h, test_case.size()) {
+                        test.minset(gc.current_AI);
+                        can = true;
+                        VI add_tree = search_tree[w];
+                        add_tree.push_back(test_case[h]);
+                        shig_rep(i, add_tree.size()) {
+                            if (!move_mino(test, add_tree[i], gc)) {
+                                can = false;
+                                break;
+                            }
+                        }
+                        if (!can) continue;
+
+                        int sft = -1; int hd_cnt = 0;
+                        while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
+                        move_mino(test, 3, gc);
+                        add_tree.push_back(3);
+                        cmd_pattern c(test, add_tree, w); c.set_isSFT(true);
+                        decltype(gc.cp)::iterator it = gc.cp.find(c);
+                        if (it != gc.cp.end()) continue;
+                        get_score(c, gc, loop);
+                        gc.cp.insert(c);
+                        add_tree.pop_back();
+                        c.pre_gc = gc.slot_id;
+                        pcv.push_back(c);
+                        shig_rep(i, hd_cnt)add_tree.push_back(2);
+                        if (to < mxm - 1) {
+                            search_tree[to] = add_tree;
+                            parent_tree[to] = parent_tree[w];
+                            to++;
+                        }
+                    }
+                    w++;
+                }
+                else {
+                    w++;
+                }
+            }
+        }
+
+
+        std::lock_guard<std::mutex> lock(mtx);
+        for (cmd_pattern p : pcv) {
+            ctl.push_back(p);
+        }
+        
+        return;
+    }
+
     cmd_pattern shigune_AI::explore_choices(game_container& gc_org) {
 
+        gc_slot = vector<game_container>(branch_num);
         vector<vector<cmd_pattern>> branch(branch_num, vector<cmd_pattern>(0));
-        vector<pair<cmd_pattern, int>> catalog(0);
-        catalog.reserve(700);
+        vector<cmd_pattern> catalog(0);
+        constexpr int cls = 100 * branch_num;
+        catalog.reserve(cls);
 
-        cp.clear(); cv.clear();
+        gc_org.cp.clear(); gc_org.cv.clear();
         //catalog.clear();
         
-        search_way(gc_org, catalog);
+        //catalog.emplace_back(search_way(gc_org, -1));
+        do_sw(ref(catalog), gc_org, -1);
 
-        sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
+        sort(all(catalog), [&](const cmd_pattern &l, const cmd_pattern &r) { return r.scr < l.scr; });
 
         if (catalog.size() == 0) {
             return null_cmd;
         }
         else if (catalog.size() < branch_num && catalog.size() > 0) {
-            auto [ccv, ic] = catalog.front();
-            return ccv;
+            for (int i = 0; i < catalog.size(); i++) {
+                //auto [pct, ci] = catalog.at(i);
+
+                branch.at(i).push_back(catalog.at(i));
+                gc_slot.at(i) = update_gc(catalog.at(i), gc_org);
+                gc_slot.at(i).slot_id = i;
+            }
+            for (int i = catalog.size(); i < branch_num; i++) {
+                gc_slot.at(i) = game_container();
+                gc_slot.at(i).slot_id = i;
+            }
         }
         else {
             shig_rep(i, branch_num) {
-                auto [pct, ci] = catalog.at(i);
-                branch.at(i).push_back(pct);
-                gc_slot.at(i) = update_gc(pct, gc_org);
+                //auto [pct, ci] = catalog.at(i);
+                branch.at(i).push_back(catalog.at(i));
+                gc_slot.at(i) = update_gc(catalog.at(i), gc_org);
                 gc_slot.at(i).slot_id = i;
             }
         }
 
         shig_rep(n, exp_cyc_lim - 1) {
-            catalog.clear(); catalog.reserve(700);
+            catalog.clear(); catalog.reserve(cls);
 
-            shig_rep(i, branch_num) search_way(gc_slot.at(i), catalog);
-            sort(all(catalog), [&](const pair<cmd_pattern, int>& l, const pair<cmd_pattern, int>& r) { return l.first.score > r.first.score; });
-            vector<game_container> proxy_slot(branch_num);
-            vector<vector<cmd_pattern>> proxy_branch(branch_num, vector<cmd_pattern>(0));
-            shig_rep(i, branch_num) {
+
+            int loop = n;
+
+            int epwtn = expl_width.at(n);
+            std::vector<std::thread> threads;
+
+            /*
+            for (int i = 0; i < epwtn; i += thd_num) {
+                int rep_num = min((epwtn - i), thd_num);
+                for (int j = 0; j < rep_num; j++) {
+
+                    //std::thread expl(do_sw, catalog, gc_slot.at(i + j), n);
+                    game_container gc = gc_slot.at(i + j);
+
+                    //threads.emplace_back(std::thread(do_sw, gc, loop));
+
+                    threads.emplace_back(std::thread([this, &catalog, gc, loop]() {this->do_sw(ref(catalog), gc, loop); }));
+
+                }
+
+                for (auto& thr : threads) {
+                    thr.join();
+                }
+                threads.clear();
+            }
+            */
+
+            for (int i = 0; i < epwtn; i++) {
+                game_container gc = gc_slot.at(i);
+                threads.emplace_back(std::thread([this, &catalog, gc, loop]() {this->do_sw(ref(catalog), gc, loop); }));
+            }
+
+            for (auto& thr : threads) {
+                thr.join();
+            }
+
+
+            sort(all(catalog), [&](const cmd_pattern &l, const cmd_pattern &r) { return r.scr < l.scr; });
+            vector<game_container> proxy_slot(expl_width.at(n));
+            vector<vector<cmd_pattern>> proxy_branch(expl_width.at(n), vector<cmd_pattern>(0));
+            shig_rep(i, expl_width.at(n)) {
                 if (catalog.size() <= i || catalog.size() == 0) {
                     branch.at(i).push_back(null_cmd);
                     proxy_slot.at(i) = update_gc(null_cmd, gc_slot.at(0));
                     proxy_slot.at(i).slot_id = i;
                 }
                 else {
-                    auto [pct, ci] = catalog.at(i);
+                    //auto [pct, ci] = catalog.at(i);
+                    int ci = catalog.at(i).pre_gc;
                     proxy_branch.at(i) = branch.at(ci);
-                    proxy_branch.at(i).push_back(pct);
-                    proxy_slot.at(i) = update_gc(pct, gc_slot.at(ci));
+                    proxy_branch.at(i).push_back(catalog.at(i));
+                    proxy_slot.at(i) = update_gc(catalog.at(i), gc_slot.at(ci));
                     proxy_slot.at(i).slot_id = i;
                 }
                 
@@ -645,8 +860,8 @@ namespace shig {
         }
 
         if (catalog.size() == 0)return null_cmd;
-        auto [r, ri] = catalog.at(0);
-        
+        //auto [r, ri] = catalog.at(0);
+        int ri = catalog.at(0).pre_gc;
         return branch.at(ri).front();
 
 
@@ -963,17 +1178,34 @@ namespace shig {
         return;
     }
 
-    void shigune_AI::get_score(cmd_pattern& cd, game_container& gcs) {
+    void shigune_AI::get_score(cmd_pattern& cd, game_container& gcs, int loopc) {
 
-        gcs.p_field_AI = gcs.field_AI;
-        shigune_AI::apply_mino(gcs.p_field_AI, cd.pat);
+        cd.scr.init_s();//without sum
+
+        //gcs.p_field_AI = gcs.field_AI;
+        //shigune_AI::apply_mino(gcs.p_field_AI, cd.pat); «‚â‚Á‚Ä‚­‚ê‚Ä‚¢‚½
+        set<int> L = erase_check_AI(cd.pat, gcs);
+
+        //shigune_AI::height_calc(gcs);
 
         cd.set_ts(gcs.SRS_kind, gcs.TS_kind);
-        set<int> L = erase_check_AI(cd.pat, gcs);
+
+        VVI q_field_AI(0); q_field_AI.reserve(45);
+        if (L.size() > 0) {
+            shig_rep(i, fh) {
+                decltype(L)::iterator it = L.find(i);
+                if (it == L.end()) q_field_AI.push_back(gcs.p_field_AI[i]);
+            }
+            while (q_field_AI.size() < fh) q_field_AI.push_back(ev_empty);
+        }
+        else {
+            q_field_AI = VVI(gcs.p_field_AI);
+        }  
+        
         LL fusion = 0;
         LL contact = 0;
         LL touch = 0;
-        LL high = cd.pat.Y;
+        LL high = 0;
         LL cmb = 0;
         LL btbc = 0;
 
@@ -982,6 +1214,78 @@ namespace shig {
         int size = cd.pat.px_size;
         int H = cd.pat.mino[rot].size();
         int W = cd.pat.mino[rot][0].size();
+        int Ls = L.size();
+
+        constexpr int hm = 10;
+        constexpr int hs = hm * 8;
+
+        bool isPC = true;
+        if (Ls > 0) {
+            for (int i = 0; i < 10; i++) {
+                if (q_field_AI.at(0).at(i) != 0) {
+                    isPC = false;
+                    break;
+                }
+            }
+        }
+        else {
+            isPC = false;
+        }
+
+        if (isPC)cd.scr.sum = shig::secure_add(1145141919810000LL, cd.scr.sum);
+
+        LL ttrp_rate = 1000000000000000;
+
+        bool chk_f = false;
+        tetri ofs_cdp = cd.pat;
+        ofs_cdp.addY(gcs.ttrp_ofsY);
+
+        if (gcs.ttrp_able) {
+            for (int i = 0; i < (int)gcs.now_ttrp.list_mino.size(); i++) {
+                if (gcs.now_ttrp.list_mino.at(i) == ofs_cdp) {
+                    if (cd.pat.id == 6) {
+                        if (gcs.now_ttrp.list_mino_s[i] == 0 && gcs.TS_kind == 0) {
+                            chk_f = true;
+                            cd.set_ttrpF(i);
+                        }
+                        else if ((gcs.now_ttrp.list_mino_s[i]) == L.size() && gcs.TS_kind == 1) {
+                            chk_f = true;
+                            cd.set_ttrpF(i);
+                        }
+                        else {
+                            chk_f = false;
+                            cd.set_ttrpF(i32_minus_one);
+                            //cd.update(ttrp_rate * -1LL);
+                        }
+                    }
+                    else {
+                        chk_f = true;
+                        cd.set_ttrpF(i);
+                    }
+
+                    break;
+
+                }
+                else {
+                    chk_f = false;
+                    cd.set_ttrpF(i32_minus_one);
+                }
+            }
+
+        }
+
+        if (chk_f == true) {
+            //cd.update(ttrp_rate);
+            cd.scr.sum = shig::secure_add(ttrp_rate, cd.scr.sum);
+            cd.scr.sum = shig::secure_add(gcs.pre_score, cd.scr.sum);
+            cd.score = shig::secure_add(cd.score, cd.scr.sum);
+            //cd.set_ttrpF(cd.pat.id);
+            return;
+        }
+        else {
+            LL pnl = -10000000;
+            cd.scr.sum = shig::secure_add(cd.scr.sum, pnl);
+        }
 
         //fusion score
         /*
@@ -1010,85 +1314,268 @@ namespace shig {
 
         */
 
-        //contact
 
 
-        //contact
+        //contact.V1
+        int cnt_m = 0, cnt_n = 0;
+        vector<bool> chk_con(W, false);
         shig_rep(j, W) {
-            if (ch[idnt][rot][j] == 1) {
+            if (ch.at(idnt).at(rot).at(j) == 1) {
+                cnt_m++;
                 int xp = cd.pat.X + j;
-                int h = cd.pat.Y - gcs.height[xp] - 1;
+                int h  = cd.pat.Y - gcs.height.at(xp) - 1;
                 if (h >= 0 && h < H) {
-                    if (cd.pat.mino[rot][h][j] != 0)contact += 20;
-                    else contact -= 10;
+                    if (cd.pat.mino.at(rot).at(h).at(j) != 0) {
+                        cnt_n++;
+                    }
+                    else {
+                        if (h >= 1) {
+                            if (cd.pat.mino.at(rot).at(h - 1).at(j) != 0) {
+                                chk_con.at(j) = true;
+                                contact -= 200;
+                            }
+                            else {
+                                contact -= 5000;
+                            }
+                        }
+                        
+                    }
                 }
-                else if (h <= 0) {
-                    contact += 10;
+                else if (h >= H) {
+                    contact -= 10000;
                 }
-                else contact -= 10;
 
+            }
+        }
+
+        // contact V2
+        const LL pnl_A = 2000, pnl_B = -1000, pnl_C = -2000;
+
+        if (cd.pat.id == 1) {
+            if (cd.pat.rot == 0 || cd.pat.rot == 2) {
+                if (cnt_n == 4)contact += pnl_A;
+                else if (cnt_n == 3 && (chk_con.at(0) == true || chk_con.at(3) == true))contact += pnl_B;
+                else contact += pnl_C;
+            }
+            else {
+                if (cnt_n == 1)contact += pnl_A;
+                else contact += pnl_C;
+            }
+        }
+        else if (cd.pat.id == 2) {
+            if (cd.pat.rot == 0 || cd.pat.rot == 2) {
+                if (cnt_n == 3)contact += pnl_A;
+                else contact += pnl_C;
+            }
+            else {
+                if (cnt_n == 2)contact += pnl_A;
+                else contact += pnl_C;
+            }
+        }
+        else if (cd.pat.id == 3) {
+            if (cd.pat.rot == 0 || cd.pat.rot == 2) {
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && chk_con.at(0) == true)contact += pnl_B;
+                else contact += pnl_C;
+            }
+            else {
+                if (cnt_n == 2)contact += pnl_A;
+                else contact += pnl_C;
+            }
+        }
+        else if (cd.pat.id == 4) {
+            if (cnt_n == 2)contact += pnl_A;
+            else contact += pnl_C;
+        }
+        else if (cd.pat.id == 5) {
+            if (cd.pat.rot == 0 || cd.pat.rot == 2) {
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && chk_con.at(2) == true)contact += pnl_B;
+                else contact += pnl_C;
+            }
+            else {
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(1) == true)contact += pnl_B;
+                else contact += pnl_C;
+            }
+        }
+        else if (cd.pat.id == 6) {
+            if (cd.pat.rot == 0 || cd.pat.rot == 2) {
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && (chk_con.at(0) == true || chk_con.at(2) == true))contact += pnl_B;
+                else contact += pnl_C;
+            }
+            else if (cd.pat.rot == 1) {
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(2) == true)contact += pnl_B;
+                else contact += pnl_C;
+            }
+            else if (cd.pat.rot == 3) {
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(0) == true)contact += pnl_B;
+                else contact += pnl_C;
+            }
+
+        }
+        else if (cd.pat.id == 7) {
+            if (cd.pat.rot == 0 || cd.pat.rot == 2) {
+                if (cnt_n == 3)contact += pnl_A;
+                else if (cnt_n == 2 && chk_con.at(0) == true)contact += pnl_B;
+                else contact += pnl_C;
+            }
+            else {
+                if (cnt_n == 2)contact += pnl_A;
+                else if (cnt_n == 1 && chk_con.at(1) == true)contact += pnl_B;
+                else contact += pnl_C;
             }
         }
 
 
         //high
-        if (cd.pat.Y > 12) {
-            high = (-2 * cd.pat.Y * cd.pat.Y);
-        }
-        else if(cd.pat.Y > 6) {
-            high = (cd.pat.Y * -20);
+        
+        LL cdY = cd.pat.Y;
 
-            if (gcs.height_sum > 100 || gcs.height_mxm > 10) {
-                high += 100;
+        if (cdY >= 14) {
+            high = (-10 * cdY * cdY * cdY);
+        }
+        else if(cdY >= 7) {
+            high = (-10 * cdY * cdY);
+
+            if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                high += 100 * (6 - cdY);
             }
 
         }
         else {
-            high = (cd.pat.Y * -10);
+            high = (-10LL * cdY);
 
-            if (gcs.height_sum > 80 || gcs.height_mxm > 8) {
-               high += 200;
+            if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+               high += 500 * (7 - cdY);
             }
 
         }
 
-        high *= 10;
-        
-
         //closure & touch
+        int tls = touch_list.at(idnt).at(rot).size();
+        LL thc = 0, thcls = 0;
+        for (int i = 0; i < tls; i++) {
+            auto [ty, tx] = touch_list.at(idnt).at(rot).at(i);
+            tx = cd.pat.X + tx;
+            if (tx < 0 || tx >= 10) {
+                thc++;
+                continue;
+            }
 
+            ty = cd.pat.Y - ty - 1;
+            if (ty < 0 || ty >= fh - 1) {
+                thc++;
+                continue;
+            }
+
+            if (gcs.p_field_AI[ty][tx] != 0) {
+                thc++;
+
+                if (tx == 0 || tx == 9) {
+                    //touch = shig::secure_add(touch, 100);
+                }
+
+                continue;
+            }
+            else {
+                if (tx == 0 || tx == 9) {
+                    //touch = shig::secure_add(touch, -100);
+                }
+
+            }
+
+
+            int closure = 0;
+            for (int k = 0; k < cc.size(); k++) {
+                int yk = cc.at(k).first + ty;
+                int xk = cc.at(k).second + tx;
+;
+                if (xk < 0 || xk >= 10) {
+                    closure++;
+                    continue;
+                }
+                if (yk < 0 || yk >= fh - 1) {
+                    closure++;
+                    continue;
+                }
+
+                if (gcs.p_field_AI.at(yk).at(xk) != 0) {
+                    closure++;
+                    continue;
+                }
+                else {
+                    continue;
+                }
+
+            }
+
+            if (closure >= 4) {
+                touch = shig::secure_add(touch, -8000);
+                thcls++;
+            }
+            else {
+                touch = shig::secure_add(touch, -1000 * closure);
+            }
+
+        }
+
+        touch = shig::secure_add(touch, thc * 1000);
+
+        if (thcls == 0) {
+            touch = shig::secure_add(touch, 10000);
+        }
+
+        /*
+        
         shig_rep(i, H) {
             shig_rep(j, W) {
                 if (cd.pat.mino[rot][i][j] == 0)continue;
                 int sX = cd.pat.X + j;
                 if (sX < 0 || sX >= 10)continue;
                 int sY = cd.pat.Y - i - 1;
-                if (sY < 0 || sY >= (gcs.field_AI.size() - 1))continue;
+                if (sY < 0 || sY >= fh - 1)continue;
+
+                for (int k = 0; k < cc.size(); k++) {
+                    int yk = cc.at(k).first  + sY;
+                    int xk = cc.at(k).second + sX;
+
+
+                }
 
                 shig_rep(k, cy.size())shig_rep(l, cx.size()) {
                     if (k == 0 && l == 0)continue;
                     int ssX = cd.pat.X + j + cx[k];
                     if (ssX < 0 || ssX >= 10) {
-                        touch += 5;
+                        touch += 20;
+                        if (cd.pat.id == 1)touch += 500;
                         continue;
                     }
                     int ssY = cd.pat.Y - i - 1 + cy[l];
-                    if (ssY < 0 || ssY >= (gcs.field_AI.size() - 1)) {
-                        touch += 5;
+                    if (ssY < 0 || ssY >= (gcs.p_field_AI.size() - 1)) {
+                        touch += 20;
+                        if (cd.pat.id == 1)touch += 500;
                         continue;
                     }
-                    if (gcs.p_field_AI[ssY][ssX] != 0)touch += 12;
-                    else touch += -10;
+                    if (gcs.p_field_AI[ssY][ssX] != 0) {
+                        touch += 20;
+                    }
+                    else {
+                        touch += -15;
+                        if (cd.pat.id == 1)touch += 10;
+                    }
 
                     if (gcs.p_field_AI[ssY][ssX] != 0)continue;
 
-                    /*
                     int closure = 0;
                     shig_rep(m, cc.size()) {
                         int sssX = cd.pat.X + j + cx[k] + cc[m].first;
                         if (sssX < 0 || sssX >= 10) {
-                            closure++;
-                            continue;
+                           closure++;
+                           continue;
                         }
                         int sssY = cd.pat.Y - i - 1 + cy[l] + cc[m].second;
                         if (sssY < 0 || sssY >= (gcs.field_AI.size() - 1)) {
@@ -1098,79 +1585,69 @@ namespace shig {
                         if (gcs.p_field_AI[sssY][sssX] != 0)closure++;
                     }
 
-                    if (closure >= 4)touch -= 100;
-                    //else touch += 50
-                    */
-
+                if (closure >= 4)touch -= 2000;
 
                 }
 
             }
         }
+
+        */
+        
 
         //cmb
         LL cmb_rate = 100;
-        if (combo * L.size() > 0) {
-            cd.update(cmb_rate * 10LL);
+        if (gcs.combo * L.size() > 0) {
+            LL c = (cmb_rate * 10LL * (gcs.combo + 1));
+            cd.scr.cmb = shig::secure_add(cd.scr.cmb, c);
+
         }
-        else if (combo == 0 && L.size() == 0) {
-            cd.update(cmb_rate);
+        else if (gcs.combo > 0 && L.size() == 0) {
+            LL c = (cmb_rate * -10LL * (gcs.combo + 1));
+            cd.scr.cmb = shig::secure_add(cd.scr.cmb, c);
+        }
+        else if (gcs.combo == 0 && L.size() == 0) {
+            LL c = cmb_rate;
+            cd.scr.cmb = shig::secure_add(cd.scr.cmb, c);
         }
         else {
-            cd.update(cmb_rate * 0LL);
+            //cd.update(gcs.combo * 0LL);
         }
-
-      
-        bool isPC = true;
-        VI lc(all(L));
-        int lcs = (int)lc.size();
-        if (lc.size() == 0)isPC = false;
-        else {
-            int le = lc.front(), re = lc.back();
-            if (re - le + 1 == lcs) {
-                shig_rep(i, 10) {
-                    if (gcs.p_field_AI[re+1][i] != 0) {
-                        isPC = false;
-                        break;
-                    }
-                }
-            }
-            else {
-                isPC = false;
-            }
-        }
-
-        if (isPC)cd.update(114514810);
-
 
         int p_A = 80;
+
+        
+
         LL ve = 0;
         if (L.size() == 0) {
 
-            if (gcs.height_sum > 120 || gcs.height_mxm > 12) {
-                ve -= 5000;
+            if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
+                ve += 50;
 
             }
-            else if (gcs.height_sum > 80 || gcs.height_mxm > 60) {
-                ve -= 500;
+            else if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                ve += 150;
+                if (cd.pat.id == 6)ve -= 200;
+                else if (cd.pat.id == 1)ve -= 400;
+
             }
             else {
-                ve += 30;
+                ve += 400;
 
-                if (cd.pat.id == 6)ve -= 130;
+                if (cd.pat.id == 6)ve -= 500;
+                else if (cd.pat.id == 1)ve -= 500;
 
             }
-
 
         }
         else if (L.size() == 1) {
             if (gcs.TS_kind == 1) {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
-                    ve += 500;
+                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                    ve += 50000;
                 }
                 else {
-                    ve += 80;
+                    ve += 80000;
                 }
 
                 if (gcs.btb > -1)btbc += 100;
@@ -1178,24 +1655,30 @@ namespace shig {
             }
             else if (gcs.TS_kind == 2) {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
-                    ve += 40;
+                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                    ve += 50;
                 }
                 else {
-                    ve += -160;
+                    ve += -50;
                 }
 
-                if (gcs.btb > -1)btbc += 500;
+                if (gcs.btb > -1)btbc += 50;
             }
             else {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 8) {
-                    ve += 300;
+                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                    ve += 400;
+                    if (cd.pat.id == 1) {
+                        ve += 500;
+                    }
                 }
                 else {
-                    ve += 30;
+                    ve += -400;
                     if (cd.pat.id == 6) {
-                        ve += -3000;
+                        ve += -1000;
+                    }
+                    else if (cd.pat.id == 1) {
+                        ve += -500;
                     }
                 }
 
@@ -1206,19 +1689,19 @@ namespace shig {
         else if (L.size() == 2) {
             if (gcs.TS_kind == 1) {
 
-                if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
-                    ve += 15000;
+                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                    ve += 300000;
                 }
                 else {
-                    ve += 20000;
+                    ve += 4000000;
                 }
 
-                if (gcs.btb > -1)btbc += 100;
+                if (gcs.btb > -1)btbc += 100000;
 
             }
             else if (gcs.TS_kind == 2) {
                 ve += 1;
-                if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
+                if (gcs.height_sum > p_A || gcs.height_mxm > 8) {
                     ve += 5;
                 }
 
@@ -1227,66 +1710,66 @@ namespace shig {
             }
             else {
 
-                if (gcs.height_sum > 80 || gcs.height_mxm > 8) {
-                    ve += 100;
+                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                    ve += 5000;
 
                     if (cd.pat.id == 6) {
-                        ve += 100;
+                        ve += 50;
                     }
                     else if (cd.pat.id == 1) {
-                        ve += 10000;
+                        ve += 2000;
                     }
 
                 }
                 else {
-                    ve += 30;
+                    ve += -400;
 
                     if (cd.pat.id == 6) {
                         ve += -3000;
                     }
                     else if (cd.pat.id == 1) {
-                        ve += -1000;
+                        ve += -600;
                     }
 
                 }
 
                 if (cd.pat.id == 6) {
-                    ve += -3000;
+                    ve += -100;
                 }
 
-                if (gcs.btb > -1)btbc += -1000;
+                if (gcs.btb > -1)btbc += -2000;
 
             }
         }
         else if (L.size() == 3) {
             if (gcs.TS_kind == 1) {
-                if (gcs.height_sum > p_A || gcs.height_mxm > 11) {
-                    ve += 30000;
+                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                    ve += 300000;
                 }
                 else {
-                    ve += 40000;
+                    ve += 500000;
                 }
 
-                if (gcs.btb > -1)btbc += 100;
+                if (gcs.btb > -1)btbc += 1000;
 
             }
             else if (gcs.TS_kind == 2) {
                 ve += 0;
-                if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
+                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
                     ve -= 0;
                 }
             }
             else {
 
-                if (gcs.height_sum > 80 || gcs.height_mxm > 80) {
-                    ve += 200;
+                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                    ve += 700000;
 
                     if (cd.pat.id == 1) {
-                        ve += 5000;
+                        ve += 500000;
                     }
                 }
                 else {
-                    ve += 20;
+                    ve += -200;
                     if (cd.pat.id == 1) {
                         ve += -500;
                     }
@@ -1297,111 +1780,96 @@ namespace shig {
             }
         }
         else if (L.size() == 4) {
-            ve += 400000;
-            if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
-                ve += 200000;
+                ve += 4000000;
+            if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                ve += 2000000;
             }
 
-            if (gcs.btb > -1)btbc += 200;
+            if (gcs.btb > -1)btbc += 1000;
 
         }
 
+        //fusion *= 100; cd.update(fusion);
 
-        LL ttrp_rate = 10000000;
-
-        bool chk_f = false;
-        tetri ofs_cdp = cd.pat;
-        ofs_cdp.addY(gcs.ttrp_ofsY);
-
-        if (gcs.ttrp_able) {
-            shig_rep(i, min({ gcs.now_ttrp.mino_num , (int)gcs.now_ttrp.list_mino.size() })) {
-                if (gcs.now_ttrp.list_mino[i] == ofs_cdp) {
-                    if (cd.pat.id == 6) {
-                        if ((gcs.now_ttrp.list_mino_s[i]) == L.size() && gcs.TS_kind == 1) {
-                            chk_f = true;
-                        }
-                        else if (gcs.now_ttrp.list_mino_s[i] == 0 && gcs.TS_kind == 0) {
-                            chk_f = true;
-                        }
-                        else {
-                            chk_f = false;
-                            cd.update(ttrp_rate * -1LL);
-                        }
-                    }
-                    else {
-                        chk_f = true;
-                    }
-
-                    break;
-
-                }
-                else {
-                    chk_f = false;
-                }
-            }
-
-        }
-
-        if (chk_f == true) {
-            cd.update(ttrp_rate);
-            cd.set_ttrpF(cd.pat.id);
-            return;
-        }
-        else {
-            LL pnl = -100;
-            cd.update(pnl);
-        }
-
-        fusion *= 100;
-        cd.update(fusion);
-
-        LL ve_rate = 100;
-        if (gcs.height_sum > p_A || gcs.height_mxm > 10) {
-            ve_rate *= 10;
+        LL ve_rate = 500;
+        if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+            ve_rate *= 100;
         }
         ve *= ve_rate;
-        cd.update(ve);
+        //cd.update(ve);
+        cd.scr.erase = ve;
 
-        touch *= 50;
-        cd.update(touch);
 
-        cd.update(high);
+        touch *= 500;
+        //cd.update(touch);
+        cd.scr.touch = touch;
 
-        contact *= 100;
-        cd.update(contact);
+        contact *= 1000;
+        //cd.update(contact);
+        cd.scr.contact = contact;
 
-        cd.update(shigune_AI::gs_BFS(cd, gcs));
+        high *= 3500;
+        //cd.update(high);
+        cd.scr.height = high;
 
-        if (gcs.height_sum < p_A && gcs.height_mxm < 10) {
-            if (cd.isSFT)cd.update(-1000);
+        //cd.update(shigune_AI::gs_BFS(cd, gcs));
+        //cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI);
+        if (gcs.height_sum < hs || gcs.height_mxm < hm) {
+            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 2500;
+        }
+        else {
+            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 1500;
+        }
+
+        if (gcs.height_sum < hs && gcs.height_mxm < hm) {
+            if (cd.isSFT) {
+                //cd.update(-20);
+                cd.scr.sum += 0;
+            }
         }
         else
         {
-            if (cd.isSFT)cd.update(-100);
+            if (cd.isSFT) {
+                //cd.update(0);
+                cd.scr.sum += 0;
+            }
         }
 
-        if (gcs.height_sum < p_A && gcs.height_mxm < 10) {
+        if (gcs.height_sum < 96 || gcs.height_mxm < 12) {
             btbc *= 10;
         }
-        cd.update(btbc);
+        //cd.update(btbc);
+        cd.scr.btbc = btbc;
 
-        cd.update(gcs.pre_score);
+        //cd.update(gcs.pre_score);
+        cd.scr.sum += gcs.pre_score;
+
+        //cd.update();
+        cd.scr.calc_sum();
+        if(loopc == -1)cd.score = shig::secure_add(cd.score, cd.scr.sum);
+        else {
+            //cd.score = shig::secure_add(cd.score, (cd.scr.sum * scr_rate.at(loopc) / 100));
+            cd.score = shig::secure_add(cd.score, cd.scr.sum);
+        }
+        //cd.score /= 100;
 
         return;
     }
 
-    LL shigune_AI::gs_BFS(cmd_pattern& cb, game_container& gcb) {
+    LL shigune_AI::gs_BFS(cmd_pattern& cb, VVI& qf) {
 
-        int open_blc = 0;
+        LL open_blc = 0;
         
-        int clos_blc = 0;
-        int mino_blc = 0;
-        int grbg_blc = 0;
+        LL clos_blc = 0;
+        LL mino_blc = 0;
+        LL grbg_blc = 0;
 
-        VVI b_field_AI(25, (VI(10, -1)));
+        const int h_limit = 40;
+
+        VVI b_field_AI(h_limit+1, (VI(10, -1)));
 
         queue<pair<int, int>> xy;
-        xy.push({ 24, 0 });
+        xy.push({ h_limit, 0 });
 
         while (!xy.empty()) {
             pair<int, int> now = xy.front(); xy.pop();
@@ -1412,9 +1880,9 @@ namespace shig {
                 int y = now.first  + cc.at(i).first;
                 int x = now.second + cc.at(i).second;
 
-                if (y < 0 || y >= 25)continue;
+                if (y < 0 || y >= h_limit)continue;
                 else if (x < 0 || x >= 10)continue;
-                else if (gcb.p_field_AI.at(y).at(x) != 0)continue;
+                else if (qf.at(y).at(x) != 0)continue;
                 else if (b_field_AI.at(y).at(x) != -1)continue;
                 else xy.push({ y, x });
 
@@ -1422,25 +1890,48 @@ namespace shig {
 
         }
 
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < h_limit; i++) {
             for (int j = 0; j < 10; j++) {
 
-                if (gcb.p_field_AI.at(i).at(j) > 0)mino_blc++;
-                else if (gcb.p_field_AI.at(i).at(j) == -8)grbg_blc++;
+                if (qf.at(i).at(j) > 0)mino_blc++;
+                else if (qf.at(i).at(j) == 8)grbg_blc++;
                 else if (b_field_AI.at(i).at(j) == -1)clos_blc++;
                 else if (b_field_AI.at(i).at(j) == 0)open_blc++;
             }
         }
 
-        LL b_closure = 100000;
-        if (clos_blc > 0)b_closure -= 100000;
-        b_closure -= 10000 * clos_blc;
+        LL b_closure = 10000;
+        if (clos_blc > 0)b_closure = 0;
+        b_closure -= 1000 * clos_blc;
         b_closure -= 100 * grbg_blc;
-        b_closure += 10 * open_blc;
+        b_closure += 0 * open_blc;
 
+        b_closure *= 1;
 
         return b_closure;
 
+    }
+
+    bool shigune_AI::height_calc(game_container& gch) {
+        gch.height_sum = 0;
+        gch.height_mxm = 0;
+        shig_rep(j, 10) {
+            int h = 44;
+            while (h >= 0) {
+                if (gch.field_AI[h][j] == 0) {
+                    gch.height[j] = h;
+                    h--;
+                }
+                else {
+                    break;
+                }
+            }
+            h++;
+            gch.height_sum += h;
+            gch.height_mxm = max(gch.height_mxm, h);
+        }
+
+        return true;
     }
 
 	bool shigune_AI::move_check(int to_x, int to_y, tetri& s_check) {
@@ -1978,6 +2469,7 @@ namespace shig {
             now.addX(to_X);
             now.addY(to_Y);
         }
+        
         return can;
 
 	}
@@ -2622,7 +3114,7 @@ namespace shig {
         int rot = s_now.rot;
         int size = s_now.px_size;
         int H = s_now.mino[rot].size();
-        int pW = gce.p_field_AI[0].size();
+        int pW = 10;
 
         shig_rep(i, H) {
             int sY = s_now.Y - i - 1;
@@ -2860,11 +3352,11 @@ namespace shig {
 
         if (!ttrp_able)return true;
 
-        if (slc.ttrp_f > 0) {
-            now_ttrp.mino_check[slc.ttrp_f-1LL] = true;
+        if (slc.ttrp_f >= 0) {
+            now_ttrp.mino_check.at(slc.ttrp_f) = true;
             int mchk_cnt = 0;
             shig_rep(i, now_ttrp.mino_num) {
-                if (now_ttrp.mino_check[i] == true) {
+                if (now_ttrp.mino_check.at(i) == true) {
                     mchk_cnt++;
                 }
             }
@@ -2993,8 +3485,9 @@ namespace shig {
         gc.set_gc_bool(gb);
 
         VVI gv(1, VI(0, 0));
-        gv[0] = height;
+        gv[0] = this->height;
         //if (!gc.set_gc_VI(gv))return false;
+        
         gc.set_gc_VI(gv);
 
         //if(!gc.set_gc_next(next_AI, q_next_AI))return false;
@@ -3024,42 +3517,39 @@ namespace shig {
     }
 
     game_container shigune_AI::update_gc(cmd_pattern& ct, game_container gcp) {
-        //shigune_AI::apply_mino(gcp.field_AI, ct.pat);
         
-        set<int> itr;
-        gcp.p_field_AI = gcp.field_AI;
-        shigune_AI::apply_mino(gcp.p_field_AI, ct.pat);
-        int rot = ct.pat.rot, size = ct.pat.px_size, H = ct.pat.mino[rot].size(), pW = p_field_AI[0].size();
+        
+        
+        int rot = ct.pat.rot, size = ct.pat.px_size, H = ct.pat.mino[rot].size(), pW = 10;
 
-        shig_rep(i, H) {
-            int sY = ct.pat.Y - i - 1;
-            int cnt = 0;
-            if (sY < 0 || sY >= 44)continue;
-            shig_rep(j, pW) {
-                if (gcp.p_field_AI[sY][j] != 0) cnt++;
-                else break;
-            }
-            if (cnt == pW) itr.insert(sY);
-        }
+        //gcp.p_field_AI = gcp.field_AI;
+        //shigune_AI::apply_mino(gcp.p_field_AI, ct.pat);
 
+        set<int> itr = shigune_AI::erase_check_AI(ct.pat, gcp);
         int itr_s = itr.size();
 
-        const VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
+        //const VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
         VVI proxy(0); proxy.reserve(45);
 
         shig_rep(i, fh) {
             decltype(itr)::iterator it = itr.find(i);
             if (it == itr.end()) proxy.push_back(gcp.p_field_AI[i]);
         }
-        while (proxy.size() < fh) proxy.push_back(empty);
+        while (proxy.size() < fh) proxy.push_back(ev_empty);
 
         gcp.field_AI = proxy;
 
         if (ct.cmd_list.at(0) == 1) gcp.hold_AI = gcp.current_AI;
         if (gcp.q_next_AI.size() == 0) {
-            gcp.current_AI = 0;
+            //gcp.current_AI = 0;
+            //*
+            shig_rep(i, NS_a.size()) {
+                gcp.q_next_AI.push(NS_a.at(i));
+            }
+            //*/
         }
-        else {
+        
+        if (gcp.q_next_AI.size() != 0) {
             gcp.current_AI = gcp.q_next_AI.front();
             gcp.q_next_AI.pop();  gcp.next_AI.clear();
             while (!gcp.q_next_AI.empty()) {
@@ -3072,6 +3562,8 @@ namespace shig {
             }
         }
         
+        
+        shigune_AI::height_calc(gcp);
 
         VI mnL(8, 8);
         mnL[gcp.current_AI] = 0;
@@ -3081,9 +3573,38 @@ namespace shig {
         }
         shigune_AI::ttrp_check(ct, itr_s, mnL, gcp);
 
-        gcp.pre_score += ct.score;
+        if (gcp.combo == 0) {
+            if (itr_s == 0) {
+
+            }
+            else {
+                gcp.combo++;
+            }
+        }else if (gcp.combo > 0) {
+            if (itr_s == 0) {
+                gcp.combo = 0;
+            }
+            else {
+                gcp.combo++;
+            }
+        }
+
+        gcp.pre_score = shig::secure_add(gcp.pre_score, ct.score);
+        //gcp.pre_score += ct.score;
 
         return gcp;
+    }
+
+    int shigune_AI::ttrp_check_mino(tetri& fd, game_container& gcf) {
+
+        bool chk_f = false;
+
+        for (int i = 0; i < gcf.now_ttrp.mino_num; i++) {
+            if (gcf.now_ttrp.list_mino.at(i) == fd)return i;
+        }
+
+        return -1;
+
     }
 
 	shigune_AI::~shigune_AI() {

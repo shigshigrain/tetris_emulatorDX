@@ -1,15 +1,6 @@
 #pragma once
 #include "tetris_engine.h"
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <queue>
-#include <random>
-#include <set>
-#include <chrono>
-#include <thread>
+
 
 using namespace std;
 
@@ -46,6 +37,14 @@ const vector<pairI2> cc = {
 	{0, 1},
 	{0, -1}
 };
+
+
+
+const vector<int> scr_rate = { 100, 95, 95, 95, 90, 90, 90, 90 ,80, 80, 80, 70, 70, 70 ,60, 60, 60, 50, 50, 50 };
+
+const VI NS_a = { 6, 1, 5, 7, 2, 3, 4 };
+
+const VI ev_empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
 
 const VVVI ch = {
 
@@ -191,10 +190,596 @@ const VVI base_cmd = {
 
 };
 
+const vector<vector<vector<pair<int, int>>>> touch_list = {
+
+	// I
+	{
+		{
+			{0, -1},
+			{0, 4},
+			{2, 4},
+			{2, -1},
+			{0, 0},
+			{0, 1},
+			{0, 2},
+			{0, 3},
+			{1, 4},
+			{2, 3},
+			{2, 2},
+			{2 ,1},
+			{2, 0},
+			{1, -1}
+		},
+		{
+			{-1, 1},
+			{-1, 3},
+			{4, 3},
+			{4, 1},
+			{-1, 2},
+			{0, 3},
+			{1, 3},
+			{2, 3},
+			{3, 3},
+			{4, 2},
+			{3, 1},
+			{2 ,1},
+			{1, 1},
+			{0, 1}
+		},
+		{
+			{1, -1},
+			{1, 4},
+			{3, 4},
+			{3, -1},
+			{1, 0},
+			{1, 1},
+			{1, 2},
+			{1, 3},
+			{2, 4},
+			{3, 3},
+			{3, 2},
+			{3 ,1},
+			{3, 0},
+			{2, -1}
+		},
+		{
+			{-1, 0},
+			{-1, 2},
+			{4, 2},
+			{4, 0},
+			{-1, 1},
+			{0, 2},
+			{1, 2},
+			{2, 2},
+			{3, 2},
+			{4, 1},
+			{3, 0},
+			{2 ,0},
+			{1, 0},
+			{0, 0}
+		}
+	},
+	// J
+	{
+		{
+			{-1, -1},
+			{-1, 1},
+			{0, 3},
+			{2, 3},
+			{2, -1},
+
+			{-1, 0},
+			{0, 1},
+			{0, 2},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{2, 0},
+			{1 ,-1},
+			{0, -1}
+		},
+		{
+			{-1, 0},
+			{-1, 3},
+			{1, 3},
+			{3, 2},
+			{3, 0},
+
+			{-1, 1},
+			{-1, 2},
+			{0, 3},
+			{1, 2},
+			{2, 2},
+			{3, 1},
+			{2, 0},
+			{1 ,0},
+			{0, 0}
+		},
+		{
+			{0, -1},
+			{0, 3},
+			{3, 3},
+			{3, 1},
+			{2, -1},
+			{0, 0},
+			{0, 1},
+			{0, 2},
+			{1, 3},
+			{2, 3},
+			{3, 2},
+			{2, 1},
+			{2, 0},
+			{1, -1}
+		},
+		{
+			{-1, 0},
+			{-1, 2},
+			{3, 2},
+			{3, -1},
+			{1, -1},
+			{-1, 1},
+			{0, 2},
+			{1, 2},
+			{2, 2},
+			{3, 1},
+			{3, 0},
+			{2, -1},
+			{1 ,0},
+			{0, 0}
+		}
+	},
+	// L
+	{
+		{
+			{-1, 1},
+			{-1, 3},
+			{3, 3},
+			{3, -1},
+			{0, -1},
+			{-1, 2},
+			{0, 3},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{2, 0},
+			{1, -1},
+			{0 ,0},
+			{0, 1}
+		},
+		{
+			{-1, 0},
+			{-1, 2},
+			{1, 3},
+			{3, 3},
+			{3, 0},
+			{-1, 1},
+			{0, 2},
+			{1, 2},
+			{2, 3},
+			{3, 2},
+			{3, 1},
+			{2, 0},
+			{1 ,0},
+			{0, 0}
+		},
+		{
+			{0, -1},
+			{0, 3},
+			{2, 3},
+			{3, 1},
+			{3, -1},
+			{0, 0},
+			{0, 1},
+			{0, 2},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{3, 0},
+			{2, -1},
+			{1, -1}
+		},
+		{
+			{-1, -1},
+			{-1, 2},
+			{3, 2},
+			{3, 0},
+			{1, -1},
+			{-1, 0},
+			{-1, 1},
+			{0, 2},
+			{1, 2},
+			{2, 2},
+			{3, 1},
+			{2, 0},
+			{1 ,0},
+			{0, -1}
+		}
+	
+	},
+	// O
+	{
+		{
+			{-1, 0},
+			{-1, 3},
+			{2, 3},
+			{2, 0},
+			{-1, 1},
+			{-1, 2},
+			{0, 3},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{1, 0},
+			{0 ,0}
+		},
+		{
+			{-1, 0},
+			{-1, 3},
+			{2, 3},
+			{2, 0},
+			{-1, 1},
+			{-1, 2},
+			{0, 3},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{1, 0},
+			{0 ,0}
+		},
+		{
+			{-1, 0},
+			{-1, 3},
+			{2, 3},
+			{2, 0},
+			{-1, 1},
+			{-1, 2},
+			{0, 3},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{1, 0},
+			{0 ,0}
+		},
+		{
+			{-1, 0},
+			{-1, 3},
+			{2, 3},
+			{2, 0},
+			{-1, 1},
+			{-1, 2},
+			{0, 3},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{1, 0},
+			{0 ,0}
+		}
+	},
+	// S
+	{
+		{
+			{-1, 0},
+			{-1, 3},
+			{1, 3},
+			{2, 2},
+			{2, -1},
+			{0, -1},
+			{-1, 1},
+			{-1, 2},
+			{0, 3},
+			{1, 2},
+			{2, 1},
+			{2, 0},
+			{1, -1},
+			{0 ,0}
+		},
+		{
+			{-1, 0},
+			{-1, 2},
+			{0, 3},
+			{3, 3},
+			{3, 1},
+			{2, 0},
+			{-1, 1},
+			{0, 2},
+			{1, 3},
+			{2, 3},
+			{3, 2},
+			{2, 1},
+			{1, 0},
+			{0 ,0}
+		},
+		{
+			{0, 0},
+			{0, 3},
+			{2, 3},
+			{3, 2},
+			{3, -1},
+			{1, -1},
+			{0, 1},
+			{0, 2},
+			{1, 3},
+			{2, 2},
+			{3, 1},
+			{3, 0},
+			{2, -1},
+			{1 ,0}
+		},
+		{
+			{-1, -1},
+			{-1, 1},
+			{0, 2},
+			{3, 2},
+			{3, 0},
+			{2, -1},
+			{-1, 0},
+			{0, 1},
+			{1, 2},
+			{2, 2},
+			{3, 1},
+			{2, 0},
+			{1, -1},
+			{0 ,-1}
+		}
+	},
+	// T
+	{
+		{
+			{-1, 0},
+			{-1, 2},
+			{0, 3},
+			{2, 3},
+			{2, -1},
+			{0, -1},
+			{-1, 1},
+			{0, 2},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{2, 0},
+			{1, -1},
+			{0 ,0}
+		},
+		{
+			{-1, 0},
+			{-1, 2},
+			{0, 3},
+			{2, 3},
+			{3, 2},
+			{3, 0},
+			{-1, 1},
+			{0, 2},
+			{1, 3},
+			{2, 2},
+			{3, 1},
+			{2, 0},
+			{1, 0},
+			{0 ,0}
+		},
+		{
+			{0, -1},
+			{0, 3},
+			{2, 3},
+			{3, 2},
+			{3, 0},
+			{2, -1},
+			
+			{0, 0},
+			{0, 1},
+			{0, 2},
+			{1, 3},
+			{2, 2},
+			{3, 1},
+			{2, 0},
+			{1 ,-1}
+		},
+		{
+			{-1, 0},
+			{-1, 2},
+			{3, 2},
+			{3, 0},
+			{2, -1},
+			{0, -1},
+			
+			{-1, 1},
+			{0, 2},
+			{1, 2},
+			{2, 2},
+			{3, 1},
+			{2, 0},
+			{1 ,-1},
+			{0, 0}
+		}
+	},
+	// Z
+	{
+		{
+			{-1, -1},
+			{-1, 2},
+			{0, 3},
+			{2, 3},
+			{2, 0},
+			{1, -1},
+			{-1, 0},
+			{-1, 1},
+			{0, 2},
+			{1, 3},
+			{2, 2},
+			{2, 1},
+			{1, 0},
+			{0 ,-1}
+		},
+		{
+			{-1, 1},
+			{-1, 3},
+			{2, 3},
+			{3, 2},
+			{3, 0},
+			{0, 0},
+			{-1, 2},
+			{0, 3},
+			{1, 3},
+			{2, 2},
+			{3, 1},
+			{2, 0},
+			{1, 0},
+			{0 ,1}
+		},
+		{
+			{0, -1},
+			{0, 2},
+			{1, 3},
+			{3, 3},
+			{3, 0},
+			{2, -1},
+			{0, 0},
+			{0, 1},
+			{1, 2},
+			{2, 3},
+			{3, 2},
+			{3, 1},
+			{2, 0},
+			{1 ,-1}
+		},
+		{
+			{-1, 0},
+			{-1, 2},
+			{2, 2},
+			{3, 1},
+			{3, -1},
+			{0, -1},
+			{-1, 1},
+			{0, 2},
+			{1, 2},
+			{2, 1},
+			{3, 0},
+			{2, -1},
+			{1, -1},
+			{0 ,0}
+		}
+	},
+
+};
+
+struct cmd_score {
+	
+	LL sum = 0;
+
+	LL height  = 0;
+	LL touch   = 0;
+	LL contact = 0;
+	LL erase   = 0;
+	LL cmb     = 0;
+	LL btbc    = 0;
+	LL closed  = 0;
+	LL PC      = 0;
+
+	cmd_score() {
+		height  = 0;
+		touch   = 0;
+		contact = 0;
+		erase   = 0;
+		cmb     = 0;
+		btbc    = 0;
+		closed  = 0;
+		PC      = 0;
+	}
 
 
+	bool init() {
+		height  = 0;
+		touch   = 0;
+		contact = 0;
+		erase   = 0;
+		cmb     = 0;
+		btbc    = 0;
+		closed  = 0;
+		PC      = 0;
+		return true;
+	}
+
+	bool init_s() {
+		sum = 0;
+		height = 0;
+		touch = 0;
+		contact = 0;
+		erase = 0;
+		cmb = 0;
+		btbc = 0;
+		closed = 0;
+		PC = 0;
+		return true;
+	}
+
+	bool t_calc_sum() {
+
+		__m256i vec1 = _mm256_set_epi64x(height, touch, contact, erase);
+		__m256i vec2 = _mm256_set_epi64x(cmb, btbc, closed, PC);
+
+		__m256i sumA = _mm256_add_epi64(vec1, vec2);
+
+		this->sum = sumA.m256i_i64[0] + sumA.m256i_i64[1] + sumA.m256i_i64[2] + sumA.m256i_i64[3];
+
+		return true;
+	}
+
+	bool calc_sum() {
+
+		//this->sum = 0;
+		this->sum = shig::secure_add(sum, height);
+		this->sum = shig::secure_add(sum, touch);
+		this->sum = shig::secure_add(sum, contact);
+		this->sum = shig::secure_add(sum, erase);
+		this->sum = shig::secure_add(sum, cmb);
+		this->sum = shig::secure_add(sum, btbc);
+		this->sum = shig::secure_add(sum, closed);
+		this->sum = shig::secure_add(sum, PC);
+
+		return true;
+	}
+
+	LL get_sum() {
+		calc_sum();
+		return this->sum;
+	}
+
+	bool operator < (const cmd_score& ath) const {
+		
+		if (sum != ath.sum)return sum < ath.sum;
+		else {
+			if (PC != ath.PC)return PC < ath.PC;
+			else {
+				if (height != ath.height)return height < ath.height;
+				else {
+					if (touch != ath.touch)return touch < ath.touch;
+					else {
+						if (contact != ath.contact)return contact < ath.contact;
+						else {
+							if (erase != ath.erase)return erase < ath.erase;
+							else {
+								if (closed != ath.closed)return closed < ath.closed;
+								else return btbc < ath.btbc;
+
+							}
+
+						}
+
+					}
+				}
+			}
+		}
+
+	}
+
+
+
+};
+
+
+/*
 struct cmd_pattern {
-	LL score = 100000;
+	LL score = 1000000000;
+	cmd_score scr;
 	int index = -1;
 	int srs = 0, kind = 0;
 	int ttrp_f = -1;
@@ -205,7 +790,10 @@ struct cmd_pattern {
 	cmd_pattern() {};
 	cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
 	
-	//set<int> d_line;
+	void update() {
+		score += scr.get_sum();
+		return;
+	}
 
 	void update(LL u) {
 		score += u;
@@ -245,6 +833,8 @@ struct cmd_pattern {
 	}
 
 };
+
+*/
 
 struct strategy {
 	int id = 0;
@@ -289,12 +879,12 @@ struct tetriplate {
 	int tp_id = 0;
 	int terms_num = 0;
 	int bgn_f = 0;
-	vector<pairI2> terms = {};
-	VI list_id = {};
-	vector<bool> mino_check = vector<bool>(7, false);
+	vector<pairI2> terms = vector<pairI2>(0);
+	vector<int> list_id = vector<int>(0);
+	vector<bool> mino_check = vector<bool>(0);
 	string temp_name = "template";
-	vector<tetri> list_mino = {};
-	vector<int> list_mino_s = {};
+	vector<tetri> list_mino = vector<tetri>(0);
+	vector<int> list_mino_s = vector<int>(0);
 
 	//tetriplate(const int& a, const int& b, const int& c, const int& d, const string& e) : mino_num(a), list_size(b), tp_id(c), terms_num(d), temp_name(e) {};
 
@@ -347,6 +937,38 @@ struct tetriplate {
 
 
 namespace shig {
+
+	class cmd_pattern {
+
+	public:
+		LL score;
+		cmd_score scr;
+		int index;
+		int srs;
+		int kind;
+		int ttrp_f;
+		int pre_gc;
+		bool isSFT;
+		VI cmd_list;
+		tetri pat;
+
+	public:
+		cmd_pattern();
+		cmd_pattern(const tetri& p, const VI& list, const int& d);
+
+		void update();
+
+		void update(LL u);
+
+		void set_ttrpF(int& sf);
+
+		void set_isSFT(const bool& sf);
+
+		void set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k);
+
+		void set_ts(int r, int k);
+
+	};
 
 	class game_container
 	{
@@ -443,11 +1065,13 @@ namespace shig {
 		bool pc_check();
 		void bgn_strategy();
 		void search_way();
-		void search_way(game_container& gc, vector<pair<cmd_pattern, int>>& pcv);
+		vector<cmd_pattern> search_way(game_container gc, int loop);
+		void do_sw(vector<cmd_pattern> &ctl, game_container gc, int loop);
 		cmd_pattern explore_choices(game_container &gc_org);
 		void get_score(cmd_pattern& cd);
-		void get_score(cmd_pattern& cd, game_container& gcs);
-		LL gs_BFS(cmd_pattern& cb, game_container& gcb);
+		void get_score(cmd_pattern& cd, game_container& gcs, int loopc);
+		LL gs_BFS(cmd_pattern& cb, VVI& qf);
+		bool height_calc(game_container& gch);
 		bool move_check(int to_x, int to_y, tetri& s_check);
 		bool move_check(int to_x, int to_y, tetri& s_check, game_container& ggc);
 		bool SRS_check(int lr, tetri& s_now);
@@ -470,16 +1094,14 @@ namespace shig {
 		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL, game_container& gct);
 		bool next_crr_check();
 		bool set_gc(game_container &gc);
-		game_container update_gc(cmd_pattern& ct, game_container pre_gc);
+		game_container update_gc(cmd_pattern& ct, game_container gcp);
+
+		int ttrp_check_mino(tetri& fd, game_container& gcf);
 
 		~shigune_AI();
 	};
 
 	// hold : 1, soft : 2, hard : 3, L_rot : 4, R_rot : 5, l_move : 6, r_move : 7;
-
-	
-
-
 
 }
 
