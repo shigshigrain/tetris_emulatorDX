@@ -3,23 +3,31 @@
 // shig_utility
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <algorithm>
-#include <numeric>
 #include <vector>
 #include <utility>
 #include <queue>
+#include <deque>
 #include <random>
+#include <bitset>
+#include <tuple>
 #include <set>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
 #include <chrono>
 #include <thread>
+#include <functional>
+#include <optional>
 #include <mutex>
-#include <memory>
-#include <type_traits>
-#include <limits>
 
 #include <immintrin.h>
 #include <malloc.h>
+
+
+
 
 using namespace std;
 

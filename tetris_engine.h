@@ -3,7 +3,7 @@
 #include "shig_utility.h"
 
 
-using namespace std;
+//using namespace std;
 //using namespace shig;
 typedef long long LL;
 typedef pair<int, int> pairI2;

@@ -2,25 +2,13 @@
 
 #include "resource.h"
 #include "framework.h"
+
+#include <dwmapi.h>
+
+#include "shigune_AI.h"
 #include "DxLib.h"
 
-//#include "tetris_engine.h"
-#include "shigune_AI.h"
-
-
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <queue>
-#include <random>
-#include <set>
-#include <chrono>
-#include <thread>
-
 using namespace std;
-
 
 typedef long long LL;
 typedef pair<int, int> pairI2;
@@ -52,3 +40,5 @@ void run_AI(shig::shigune_AI& ai);
 void run_cmd(queue<int>&s_list, shig::shigune_AI &aii);
 int get_RFR(int fps);
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+static BOOL monitorenumproc(HMONITOR hMon, HDC hMonDC, LPRECT lpMonRect, LPARAM monRects);
+static LRESULT CALLBACK WndProcHook(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
