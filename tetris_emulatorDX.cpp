@@ -51,7 +51,7 @@ static LRESULT CALLBACK WndProcHook(HWND handle, UINT msg, WPARAM wParam, LPARAM
 
     // スナップするか否か、するなら四隅のどこか
     static enum class DoSnap {
-        NO, TL, TR, BL, BR
+        NO, TL, TR, BL, BR, FW
     } s_doSnap = DoSnap::NO;
 
     // スナップすることが決まったときのモニターのインデックス
@@ -92,6 +92,8 @@ static LRESULT CALLBACK WndProcHook(HWND handle, UINT msg, WPARAM wParam, LPARAM
 
             // スナップ処理が発動するマウス座標の画面端判定範囲に余裕を持たせる
             static constexpr int padding = 50;
+            // 画面中央の位置を計算
+            int centerX = (r.left + r.right) / 2;
 
             // 左上
             if (p.x <= r.left + padding && p.y <= r.top + padding)
@@ -117,6 +119,14 @@ static LRESULT CALLBACK WndProcHook(HWND handle, UINT msg, WPARAM wParam, LPARAM
                 s_doSnap = DoSnap::BR;
                 s_monIndex = i;
             }
+            // 中央上 x軸中央から左右200px,↓100pxのマージン
+            if (p.x >= centerX - padding * 4 && p.x <= centerX + padding * 4 && p.y <= r.top + padding * 2)
+            {
+                s_doSnap = DoSnap::FW;
+                s_monIndex = i;
+            }
+
+
         }
     }
     break;
@@ -125,76 +135,118 @@ static LRESULT CALLBACK WndProcHook(HWND handle, UINT msg, WPARAM wParam, LPARAM
     {
         if (s_doSnap == DoSnap::NO)
             break;
+        else if (s_doSnap == DoSnap::FW) {
+            RECT& monRect = s_monRects[s_monIndex];
 
-        // モニターのRECT
-        RECT& monRect = s_monRects[s_monIndex];
+            // ウィンドウのRECT(見た目より当たり判定?が広い)
+            RECT wndRect = {};
+            GetWindowRect(handle, &wndRect);
 
-        // ウィンドウのRECT(見た目より当たり判定?が広い)
-        RECT wndRect = {};
-        GetWindowRect(handle, &wndRect);
+            // ウィンドウの見たままの大きさのRECT
+            RECT looksRect = {};
+            DwmGetWindowAttribute(handle, DWMWA_EXTENDED_FRAME_BOUNDS, &looksRect, sizeof(RECT));
 
-        // ウィンドウの見たままの大きさのRECT
-        RECT looksRect = {};
-        DwmGetWindowAttribute(handle, DWMWA_EXTENDED_FRAME_BOUNDS, &looksRect, sizeof(RECT));
+            // A.横幅基準でウィンドウサイズを計算
+            RECT aRect = {};
+            {
+                aRect.right = (monRect.right - monRect.left);                            // 見た目の幅が画面の 1/1 ※最大化なので
+                aRect.right += (wndRect.right - wndRect.left) - (looksRect.right - looksRect.left); // 見た目の幅をウィンドウの幅に変換
+                aRect.right -= (s_wndDiffRect.right - s_wndDiffRect.left);                          // ウィンドウの幅をクライアントの幅に変換
+                aRect.bottom = aRect.right * INIT_WINDOW_CLIENT_Y_SIZE / INIT_WINDOW_CLIENT_X_SIZE; // クライアントのアスペクト比を保つように高さを計算
+            }
 
-        // A.横幅基準でウィンドウサイズを計算
-        RECT aRect = {};
-        {
-            aRect.right = (monRect.right - monRect.left) / 2;                                   // 見た目の幅が画面の 1/2
-            aRect.right += (wndRect.right - wndRect.left) - (looksRect.right - looksRect.left); // 見た目の幅をウィンドウの幅に変換
-            aRect.right -= (s_wndDiffRect.right - s_wndDiffRect.left);                          // ウィンドウの幅をクライアントの幅に変換
-            aRect.bottom = aRect.right * INIT_WINDOW_CLIENT_Y_SIZE / INIT_WINDOW_CLIENT_X_SIZE; // クライアントのアスペクト比を保つように高さを計算
-        }
+            RECT dstRect = aRect;
 
-        // B.高さ基準でウィンドウサイズを計算
-        //RECT bRect = {};
-        //{
-        //    bRect.bottom = (monRect.bottom - monRect.top) / 2;                                   // 見た目の高さが画面の 1/2
-        //    bRect.bottom += (wndRect.bottom - wndRect.top) - (looksRect.bottom - looksRect.top); // 見た目の高さをウィンドウの高さに変換
-        //    bRect.bottom -= (s_wndDiffRect.bottom - s_wndDiffRect.top);                          // ウィンドウの高さをクライアントの高さに変換
-        //    bRect.right = bRect.bottom * INIT_WINDOW_CLIENT_X_SIZE / INIT_WINDOW_CLIENT_Y_SIZE;  // クライアントのアスペクト比を保つように幅を計算
-        //}
+            // クライアントサイズをこの関数に設定する
+            DxLib::SetWindowSize(dstRect.right, dstRect.bottom);
 
-        //RECT dstRect = {};
+            // ウィンドウサイズを変更したのでサイズを取得し直す
+            GetWindowRect(handle, &wndRect);
+            DwmGetWindowAttribute(handle, DWMWA_EXTENDED_FRAME_BOUNDS, &looksRect, sizeof(RECT));
 
-        // AとBの内、小さい方を選択
-        //if (aRect.right <= bRect.right)
-        //    dstRect = aRect;
-        //else
-        //    dstRect = bRect;
-
-        // ウィンドウを縦に並べる使い方はしないので
-        // Bはコメントアウトし、Aを選択することにした
-        RECT dstRect = aRect;
-
-        // クライアントサイズをこの関数に設定する
-        DxLib::SetWindowSize(dstRect.right, dstRect.bottom);
-
-        // ウィンドウサイズを変更したのでサイズを取得し直す
-        GetWindowRect(handle, &wndRect);
-        DwmGetWindowAttribute(handle, DWMWA_EXTENDED_FRAME_BOUNDS, &looksRect, sizeof(RECT));
-
-        switch (s_doSnap)
-        {
-        case DoSnap::TL:
-            // 左上
             SetWindowPosition(monRect.left + (wndRect.left - looksRect.left), monRect.top + (wndRect.top - looksRect.top));
-            break;
-        case DoSnap::TR:
-            // 右上
-            SetWindowPosition(monRect.right - (looksRect.right - looksRect.left) + (wndRect.left - looksRect.left), monRect.top + (wndRect.top - looksRect.top));
-            break;
-        case DoSnap::BL:
-            // 左下
-            SetWindowPosition(monRect.left + (wndRect.left - looksRect.left), monRect.bottom - (looksRect.bottom - looksRect.top) + (wndRect.top - looksRect.top));
-            break;
-        case DoSnap::BR:
-            // 右下
-            SetWindowPosition(monRect.right - (looksRect.right - looksRect.left) + (wndRect.left - looksRect.left), monRect.bottom - (looksRect.bottom - looksRect.top) + (wndRect.top - looksRect.top));
-            break;
+            s_doSnap = DoSnap::NO;
+
+
+        }
+        else {
+            // モニターのRECT
+            RECT& monRect = s_monRects[s_monIndex];
+
+            // ウィンドウのRECT(見た目より当たり判定?が広い)
+            RECT wndRect = {};
+            GetWindowRect(handle, &wndRect);
+
+            // ウィンドウの見たままの大きさのRECT
+            RECT looksRect = {};
+            DwmGetWindowAttribute(handle, DWMWA_EXTENDED_FRAME_BOUNDS, &looksRect, sizeof(RECT));
+
+            // A.横幅基準でウィンドウサイズを計算
+            RECT aRect = {};
+            {
+                aRect.right = (monRect.right - monRect.left) / 2;                                   // 見た目の幅が画面の 1/2
+                aRect.right += (wndRect.right - wndRect.left) - (looksRect.right - looksRect.left); // 見た目の幅をウィンドウの幅に変換
+                aRect.right -= (s_wndDiffRect.right - s_wndDiffRect.left);                          // ウィンドウの幅をクライアントの幅に変換
+                aRect.bottom = aRect.right * INIT_WINDOW_CLIENT_Y_SIZE / INIT_WINDOW_CLIENT_X_SIZE; // クライアントのアスペクト比を保つように高さを計算
+            }
+
+            /*
+
+            // B.高さ基準でウィンドウサイズを計算
+            RECT bRect = {};
+            {
+                bRect.bottom = (monRect.bottom - monRect.top) / 2;                                   // 見た目の高さが画面の 1/2
+                bRect.bottom += (wndRect.bottom - wndRect.top) - (looksRect.bottom - looksRect.top); // 見た目の高さをウィンドウの高さに変換
+                bRect.bottom -= (s_wndDiffRect.bottom - s_wndDiffRect.top);                          // ウィンドウの高さをクライアントの高さに変換
+                bRect.right = bRect.bottom * INIT_WINDOW_CLIENT_X_SIZE / INIT_WINDOW_CLIENT_Y_SIZE;  // クライアントのアスペクト比を保つように幅を計算
+            }
+
+            RECT dstRect = {};
+
+            // AとBの内、小さい方を選択
+            if (aRect.right <= bRect.right)
+                dstRect = aRect;
+            else
+                dstRect = bRect;
+
+            */
+
+            // ウィンドウを縦に並べる使い方はしないので
+            // Bはコメントアウトし、Aを選択することにした
+            RECT dstRect = aRect;
+
+            // クライアントサイズをこの関数に設定する
+            DxLib::SetWindowSize(dstRect.right, dstRect.bottom);
+
+            // ウィンドウサイズを変更したのでサイズを取得し直す
+            GetWindowRect(handle, &wndRect);
+            DwmGetWindowAttribute(handle, DWMWA_EXTENDED_FRAME_BOUNDS, &looksRect, sizeof(RECT));
+
+            switch (s_doSnap)
+            {
+            case DoSnap::TL:
+                // 左上
+                SetWindowPosition(monRect.left + (wndRect.left - looksRect.left), monRect.top + (wndRect.top - looksRect.top));
+                break;
+            case DoSnap::TR:
+                // 右上
+                SetWindowPosition(monRect.right - (looksRect.right - looksRect.left) + (wndRect.left - looksRect.left), monRect.top + (wndRect.top - looksRect.top));
+                break;
+            case DoSnap::BL:
+                // 左下
+                SetWindowPosition(monRect.left + (wndRect.left - looksRect.left), monRect.bottom - (looksRect.bottom - looksRect.top) + (wndRect.top - looksRect.top));
+                break;
+            case DoSnap::BR:
+                // 右下
+                SetWindowPosition(monRect.right - (looksRect.right - looksRect.left) + (wndRect.left - looksRect.left), monRect.bottom - (looksRect.bottom - looksRect.top) + (wndRect.top - looksRect.top));
+                break;
+            }
+
+            s_doSnap = DoSnap::NO;
+
         }
 
-        s_doSnap = DoSnap::NO;
+        
     }
     break;
     }
