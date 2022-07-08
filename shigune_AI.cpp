@@ -30,7 +30,14 @@ namespace shig {
         pat = tetri();
     }
 
-    cmd_pattern::cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
+    cmd_pattern::cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {
+        score = 1000000000;
+        scr = cmd_score();
+        srs = 0, kind = 0;
+        ttrp_f = -1;
+        pre_gc = 0;
+        isSFT = false;
+    };
 
     void cmd_pattern::update() {
         score += scr.get_sum();

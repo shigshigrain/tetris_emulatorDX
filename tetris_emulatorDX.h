@@ -38,6 +38,7 @@ void show_field_AI(int flag, shig::shigune_AI& ai);
 void run_game();
 void run_AI(shig::shigune_AI& ai);
 void run_cmd(queue<int>&s_list, shig::shigune_AI &aii);
+bool get_key_buf();
 int get_RFR(int fps);
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 static BOOL monitorenumproc(HMONITOR hMon, HDC hMonDC, LPRECT lpMonRect, LPARAM monRects);

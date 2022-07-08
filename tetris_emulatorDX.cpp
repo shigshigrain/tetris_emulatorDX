@@ -843,6 +843,43 @@ void run_cmd(queue<int>& s_list, shig::shigune_AI& aii) {
     return;
 }
 
+bool get_key_buf() {
+    DINPUT_JOYSTATE DIS;
+    int err = GetJoypadDirectInputState(DX_INPUT_PAD1, &DIS);
+    GetHitKeyStateAll(KeyBuf);
+
+    int pad_sts = GetJoypadInputState(DX_INPUT_PAD1);
+    //int key_sts = GetJoypadInputState(DX_INPUT_KEY);
+
+    if (DIS.POV[0] == 22500 || DIS.POV[0] == 27000 || DIS.POV[0] == 31500) {
+        KeyBuf[KEY_INPUT_LEFT] = 1;
+    }
+    if (DIS.POV[0] == 4500 || DIS.POV[0] == 9000 || DIS.POV[0] == 13500) {
+        KeyBuf[KEY_INPUT_RIGHT] = 1;
+    }
+    if (DIS.POV[0] == 13500 || DIS.POV[0] == 18000 || DIS.POV[0] == 22500) {
+        KeyBuf[KEY_INPUT_DOWN] = 1;
+    }
+    if (DIS.Buttons[1] == 128) {
+        KeyBuf[KEY_INPUT_SPACE] = 1;
+    }
+    if (DIS.Buttons[5] == 128 || DIS.Buttons[7] == 128) {
+        KeyBuf[KEY_INPUT_UP] = 1;
+    }
+    if (DIS.Buttons[4] == 128 || DIS.Buttons[6] == 128) {
+        KeyBuf[KEY_INPUT_Z] = 1;
+    }
+    if (DIS.Buttons[0] == 128) {
+        KeyBuf[KEY_INPUT_C] = 1;
+    }
+    if (DIS.Buttons[8] == 128) {
+        KeyBuf[KEY_INPUT_R] = 1;
+    }
+    if (DIS.Buttons[12] == 128) {
+        KeyBuf[KEY_INPUT_ESCAPE] = 1;
+    }
+}
+
 int get_RFR(int fps) {
     return 1000 / fps;
 }
@@ -914,40 +951,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // メッセージループに代わる処理をする
         //if (ProcessMessage() == -1)break;
 
-        DINPUT_JOYSTATE DIS;
-        int err = GetJoypadDirectInputState(DX_INPUT_PAD1, &DIS);
-        GetHitKeyStateAll(KeyBuf);
-
-        int pad_sts = GetJoypadInputState(DX_INPUT_PAD1);
-        //int key_sts = GetJoypadInputState(DX_INPUT_KEY);
-
-        if (DIS.POV[0] == 22500 || DIS.POV[0] == 27000 || DIS.POV[0] == 31500) {
-            KeyBuf[KEY_INPUT_LEFT] = 1;
-        }
-        if (DIS.POV[0] == 4500 || DIS.POV[0] == 9000 || DIS.POV[0] == 13500) {
-            KeyBuf[KEY_INPUT_RIGHT] = 1;
-        }
-        if (DIS.POV[0] == 13500 || DIS.POV[0] == 18000 || DIS.POV[0] == 22500) {
-            KeyBuf[KEY_INPUT_DOWN] = 1;
-        }
-        if (DIS.Buttons[1] == 128) {
-            KeyBuf[KEY_INPUT_SPACE] = 1;
-        }
-        if (DIS.Buttons[5] == 128 || DIS.Buttons[7] == 128) {
-            KeyBuf[KEY_INPUT_UP] = 1;
-        }
-        if (DIS.Buttons[4] == 128 || DIS.Buttons[6] == 128) {
-            KeyBuf[KEY_INPUT_Z] = 1;
-        }
-        if (DIS.Buttons[0] == 128) {
-            KeyBuf[KEY_INPUT_C] = 1;
-        }
-        if (DIS.Buttons[8] == 128) {
-            KeyBuf[KEY_INPUT_R] = 1;
-        }
-        if (DIS.Buttons[12] == 128) {
-            KeyBuf[KEY_INPUT_ESCAPE] = 1;
-        }
+        get_key_buf();
 
         if (KeyBuf[KEY_INPUT_ESCAPE]) {
             break;
