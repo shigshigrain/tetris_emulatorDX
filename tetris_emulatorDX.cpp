@@ -2,7 +2,7 @@
 // v.3.5.0_new_explore
 
 
-#include "tetris_emulatorDX.h"
+#include "tetris_emutorDX.h"
 //using namespace DxLib;
 //using namespace shig;
 
@@ -531,8 +531,6 @@ void run_game() {
 
         bool any_put = false;
 
-        
-
         if (KeyBuf[KEY_INPUT_R]) {
             show_field(0);
             WaitTimer(500);
@@ -878,6 +876,8 @@ bool get_key_buf() {
     if (DIS.Buttons[12] == 128) {
         KeyBuf[KEY_INPUT_ESCAPE] = 1;
     }
+
+    return true;
 }
 
 int get_RFR(int fps) {
