@@ -1035,11 +1035,11 @@ namespace shig {
 
         if (cdY > 14) {
             high = (-10 * cdY * cdY * cdY);
-            high -= (cdY - gcs.height_mxm + 1) * 800;
+            high -= (cdY - gcs.height_mxm + 1) * 80000;
         }
         else if(cdY > 8) {
             high = (-10 * cdY * cdY + 810);
-            high -= (cdY - gcs.height_mxm + 1) * 400;
+            high -= (cdY - gcs.height_mxm + 1) * 4000;
 
         }
         else {
@@ -1272,6 +1272,15 @@ namespace shig {
                         ve += 500;
                     }
                 }
+                else if (gcs.height_sum < 50 || gcs.height_mxm < 5) {
+                    ve += -5000;
+                    /*if (cd.pat.id == 6) {
+                        ve += -10000;
+                    }
+                    else if (cd.pat.id == 1) {
+                        ve += -2000;
+                    }*/
+                }
                 else {
                     ve += -2000;
                     if (cd.pat.id == 6) {
@@ -1404,7 +1413,7 @@ namespace shig {
         //cd.update(touch);
         cd.scr.touch = touch;
 
-        contact *= 1000;
+        contact *= 1200;
         //cd.update(contact);
         cd.scr.contact = contact;
 

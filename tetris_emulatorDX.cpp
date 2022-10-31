@@ -2,7 +2,9 @@
 // v.3.5.0_new_explore
 
 
-#include "tetris_emutorDX.h"
+#include "tetris_emulatorDX.h"
+
+
 //using namespace DxLib;
 //using namespace shig;
 
