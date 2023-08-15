@@ -799,20 +799,18 @@ namespace shig {
             q_field_AI = VVI(gcs.p_field_AI);
         }
 
-        LL fusion = 0;
+        //LL fusion = 0;
         LL contact = 0;
         LL touch = 0;
         LL high = 0;
-        LL cmb = 0;
+        //LL cmb = 0;
         LL btbc = 0;
 
         int rot = cd.pat.rot;
         int idnt = cd.pat.id - 1;
-        int size = cd.pat.px_size;
         int H = (int)cd.pat.mino[rot].size();
         int W = (int)cd.pat.mino[rot][0].size();
         int Ls = (int)L.size();
-        const int p_A = 80;
 
         constexpr int hm = 12;
         constexpr int hs = hm * 8;
