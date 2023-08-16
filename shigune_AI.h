@@ -777,7 +777,7 @@ struct cmd_score {
 
 
 /*
-struct cmd_pattern {
+struct CmdPattern {
 	LL score = 1000000000;
 	cmd_score scr;
 	int index = -1;
@@ -785,10 +785,10 @@ struct cmd_pattern {
 	int ttrp_f = -1;
 	bool isSFT = false;
 	VI cmd_list = {};
-	tetri pat;
+	Tetri pat;
 
-	cmd_pattern() {};
-	cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
+	CmdPattern() {};
+	CmdPattern(const Tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
 	
 	void update() {
 		score += scr.get_sum();
@@ -808,7 +808,7 @@ struct cmd_pattern {
 		isSFT = sf;
 	}
 
-	void set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k) {
+	void set(LL& s, const Tetri& p, VI& list, int& d, int& r, int& k) {
 		score = s;
 		pat = p;
 		cmd_list = list;
@@ -824,11 +824,11 @@ struct cmd_pattern {
 		return;
 	}
 
-	bool operator < (const cmd_pattern& ath) const {
+	bool operator < (const CmdPattern& ath) const {
 		return (pat < ath.pat);
 	}
 
-	bool operator == (const cmd_pattern& ath) const {
+	bool operator == (const CmdPattern& ath) const {
 		return (pat == ath.pat);
 	}
 
@@ -872,7 +872,7 @@ struct strategy {
 
 };
 
-struct tetriplate {
+struct TetriPlate {
 	bool avalable = true;
 	int mino_num = 7;
 	int list_size = 0;
@@ -883,10 +883,10 @@ struct tetriplate {
 	vector<int> list_id = vector<int>(0);
 	vector<bool> mino_check = vector<bool>(0);
 	string temp_name = "template";
-	vector<tetri> list_mino = vector<tetri>(0);
+	vector<Tetri> list_mino = vector<Tetri>(0);
 	vector<int> list_mino_s = vector<int>(0);
 
-	//tetriplate(const int& a, const int& b, const int& c, const int& d, const string& e) : mino_num(a), list_size(b), tp_id(c), terms_num(d), temp_name(e) {};
+	//TetriPlate(const int& a, const int& b, const int& c, const int& d, const string& e) : mino_num(a), list_size(b), tp_id(c), terms_num(d), temp_name(e) {};
 
 	bool set(int& a, int& b, int& c, int& d, string& e, int& f) {
 		mino_num = a;
@@ -905,7 +905,7 @@ struct tetriplate {
 		return true;
 	}
 
-	bool set_list(vector<tetri>& rd, VI& rs) {
+	bool set_list(vector<Tetri>& rd, VI& rs) {
 		list_mino = rd;
 		list_mino_s = rs;
 		return true;
@@ -938,7 +938,7 @@ struct tetriplate {
 
 namespace shig {
 
-	class cmd_pattern {
+	class CmdPattern {
 
 	public:
 		LL score;
@@ -950,11 +950,11 @@ namespace shig {
 		int pre_gc;
 		bool isSFT;
 		VI cmd_list;
-		tetri pat;
+		Tetri pat;
 
 	public:
-		cmd_pattern();
-		cmd_pattern(const tetri& p, const VI& list, const int& d);
+		CmdPattern();
+		CmdPattern(const Tetri& p, const VI& list, const int& d);
 
 		void update();
 
@@ -964,13 +964,13 @@ namespace shig {
 
 		void set_isSFT(const bool& sf);
 
-		void set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k);
+		void set(LL& s, const Tetri& p, VI& list, int& d, int& r, int& k);
 
 		void set_ts(int r, int k);
 
 	};
 
-	class game_container
+	class GameContainer
 	{
 	public:
 		//private:
@@ -997,25 +997,25 @@ namespace shig {
 		VVI strategy_map;
 		vector<strategy> strategy_list;
 		VI cmd_list;
-		set<cmd_pattern> cp;
-		vector<cmd_pattern> cv;
-		tetriplate now_ttrp;
-		vector<cmd_pattern> ec;
+		set<CmdPattern> cp;
+		vector<CmdPattern> cv;
+		TetriPlate now_ttrp;
+		vector<CmdPattern> ec;
 	public:
-		game_container();
-		~game_container();
+		GameContainer();
+		~GameContainer();
 		bool set_gc_int(const VI& si);
 		bool set_gc_bool(const vector<bool>& sb);
 		bool set_gc_VI(const vector<VI>& sv);
 		bool set_gc_next(const VI& nx, const queue<int>& qnx);
 		bool set_gc_field(const vector<VVI>& sf);
-		bool set_gc_ttrp(const tetriplate& st);
-		bool add_gc_cmdp(const cmd_pattern& cg);
-		cmd_pattern get_gc_cmdp(int itr);
+		bool set_gc_ttrp(const TetriPlate& st);
+		bool add_gc_cmdp(const CmdPattern& cg);
+		CmdPattern get_gc_cmdp(int itr);
 
 	};
 
-	class shigune_AI
+	class AIshigune
 	{
 	private:
 		int identifier;
@@ -1044,19 +1044,19 @@ namespace shig {
 		VVI strategy_map;
 		vector<strategy> strategy_list;
 		VI cmd_list;
-		set<cmd_pattern> cp;
-		vector<cmd_pattern> cv;
+		set<CmdPattern> cp;
+		vector<CmdPattern> cv;
 		decltype(cp)::iterator cp_itr;
 		VS ttrp_name_list;
 		VI ttrp_id_list;
-		vector<tetriplate> ttrp_list;
+		vector<TetriPlate> ttrp_list;
 		VI ttrp_bgnF;
-		vector<game_container> gc_slot;
+		vector<GameContainer> gc_slot;
 
-		game_container now_gc;
+		GameContainer now_gc;
 
 	public:
-		shigune_AI(int ii);
+		AIshigune(int ii);
 		VI shigune_main();
 		VI get_cmd();
 		void get_field();
@@ -1064,33 +1064,33 @@ namespace shig {
 		bool strategy_mark();
 		bool pc_check();
 		void bgn_strategy();
-		vector<cmd_pattern> search_way(game_container gc, int loop);
-		void do_sw(vector<cmd_pattern> &ctl, game_container gc, int loop);
-		cmd_pattern explore_choices(game_container gc_org);
-		void get_score(cmd_pattern& cd, game_container& gcs, int loopc);
-		LL gs_BFS(cmd_pattern& cb, VVI& qf);
-		bool height_calc(game_container& gch);
-		bool move_check(int to_x, int to_y, tetri& s_check, game_container& ggc);
-		bool SRS_check(int lr, tetri& s_now, game_container& ggc);
-		int TS_check(int toX, int toY, tetri& ts, game_container& ggc);
-		set<int> erase_check_AI(tetri& s_now, game_container &gce);
-		void apply_mino(VVI& c_field, tetri& s_now);
-		bool move_mino(tetri& m_now, int s_action, game_container& ggc);
-		void print_gh(tetri& s_now);
+		vector<CmdPattern> search_way(GameContainer gc, int loop);
+		void do_sw(vector<CmdPattern> &ctl, GameContainer gc, int loop);
+		CmdPattern explore_choices(GameContainer gc_org);
+		void get_score(CmdPattern& cd, GameContainer& gcs, int loopc);
+		LL gs_BFS(CmdPattern& cb, VVI& qf);
+		bool height_calc(GameContainer& gch);
+		bool move_check(int to_x, int to_y, Tetri& s_check, GameContainer& ggc);
+		bool SRS_check(int lr, Tetri& s_now, GameContainer& ggc);
+		int TS_check(int toX, int toY, Tetri& ts, GameContainer& ggc);
+		set<int> erase_check_AI(Tetri& s_now, GameContainer &gce);
+		void apply_mino(VVI& c_field, Tetri& s_now);
+		bool move_mino(Tetri& m_now, int s_action, GameContainer& ggc);
+		void print_gh(Tetri& s_now);
 		void move_itr(int lr);
 		VVI get_AI_field(int p, int m);
 		VI get_AI_cmd();
 		pair<int, string> get_sttrp_name();
 		bool load_ttrp();
-		bool ttrp_crr(tetri& now_p, int& size_l);
-		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL);
-		bool ttrp_check(cmd_pattern& slc, int& sle, VI& mnL, game_container& gct);
+		bool ttrp_crr(Tetri& now_p, int& size_l);
+		bool ttrp_check(CmdPattern& slc, int& sle, VI& mnL);
+		bool ttrp_check(CmdPattern& slc, int& sle, VI& mnL, GameContainer& gct);
 		bool next_crr_check();
-		bool set_gc(game_container &gc);
-		game_container update_gc(cmd_pattern& ct, game_container gcp);
-		int ttrp_check_mino(tetri& fd, game_container& gcf);
+		bool set_gc(GameContainer &gc);
+		GameContainer update_gc(CmdPattern& ct, GameContainer gcp);
+		int ttrp_check_mino(Tetri& fd, GameContainer& gcf);
 
-		~shigune_AI();
+		~AIshigune();
 	};
 
 	// hold : 1, soft : 2, hard : 3, L_rot : 4, R_rot : 5, l_move : 6, r_move : 7;
@@ -1098,6 +1098,6 @@ namespace shig {
 }
 
 bool GetTempNameList(VS& name_list);
-bool ReadTempData(string& name, tetriplate& ttrp);
+bool ReadTempData(string& name, TetriPlate& ttrp);
 
 

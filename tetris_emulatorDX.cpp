@@ -386,7 +386,7 @@ void show_field(int flag) {
     return;
 }
 
-void show_field_AI(int flag, shig::shigune_AI &ai) {
+void show_field_AI(int flag, shig::AIshigune &ai) {
     //VVI s_field = ai.get_AI_field(1, 1);
 
     ClearDrawScreen();//裏画面消す
@@ -684,7 +684,7 @@ void run_game() {
     return;
 }
 
-void run_AI(shig::shigune_AI& ai) {
+void run_AI(shig::AIshigune& ai) {
 
 
     if (GetNowCount() - sectime >= get_RFR(60)) {
@@ -736,7 +736,7 @@ void run_AI(shig::shigune_AI& ai) {
     return;
 }
 
-void run_cmd(queue<int>& s_list, shig::shigune_AI& aii) {
+void run_cmd(queue<int>& s_list, shig::AIshigune& aii) {
 
     sectime = GetNowCount();
 
@@ -944,7 +944,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     set_field();
 
-    shig::shigune_AI ai(1);
+    shig::AIshigune ai(1);
     ai.load_ttrp();
 
     int m_push = 0;

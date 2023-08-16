@@ -4,9 +4,9 @@ int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
 const int branch_num = 40;//branch_num >= 30
-const vector<int> expl_width = { 40, 40, 40, 30, 30, 20, 20, 20, 20, 10, 10, 10, 10, 10, 10 };
+const vector<int> expl_width = { 40, 40, 40, 30, 20, 20, 15, 10, 10, 10, 10, 10, 10, 10, 10 };
 //const vector<int> expl_width = { 20, 20, 20, 20, 20, 20, 20, 20, 15, 15, 15, 10, 10, 10, 10 };
-const int cyc_num = 6;//up to 14
+const int cyc_num = 7;//up to 14
 const int fh = 45;
 const int thd_num = 5;
 
@@ -18,7 +18,7 @@ static std::mutex mtx;
 namespace shig {
 
     // �R�}���h���͂̓��e�Ə��
-    cmd_pattern::cmd_pattern() {
+    CmdPattern::CmdPattern() {
         score = 0;
         scr = cmd_score();
         index = -1;
@@ -27,10 +27,10 @@ namespace shig {
         pre_gc = 0;
         isSFT = false;
         cmd_list = {};
-        pat = tetri();
+        pat = Tetri();
     }
 
-    cmd_pattern::cmd_pattern(const tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {
+    CmdPattern::CmdPattern(const Tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {
         score = 0;
         scr = cmd_score();
         srs = 0, kind = 0;
@@ -39,25 +39,25 @@ namespace shig {
         isSFT = false;
     };
 
-    void cmd_pattern::update() {
+    void CmdPattern::update() {
         score += scr.get_sum();
         return;
     }
 
-    void cmd_pattern::update(LL u) {
+    void CmdPattern::update(LL u) {
         score += u;
         return;
     }
 
-    void cmd_pattern::set_ttrpF(int& sf) {
+    void CmdPattern::set_ttrpF(int& sf) {
         ttrp_f = sf;
     }
 
-    void cmd_pattern::set_isSFT(const bool& sf) {
+    void CmdPattern::set_isSFT(const bool& sf) {
         isSFT = sf;
     }
 
-    void cmd_pattern::set(LL& s, const tetri& p, VI& list, int& d, int& r, int& k) {
+    void CmdPattern::set(LL& s, const Tetri& p, VI& list, int& d, int& r, int& k) {
         score = s;
         pat = p;
         cmd_list = list;
@@ -67,22 +67,22 @@ namespace shig {
         //d_line = l;
     }
 
-    void cmd_pattern::set_ts(int r, int k) {
+    void CmdPattern::set_ts(int r, int k) {
         srs = r;
         kind = k;
         return;
     }
 
-    bool operator < (const cmd_pattern& a, const cmd_pattern& b) {
+    bool operator < (const CmdPattern& a, const CmdPattern& b) {
         return (a.pat < b.pat);
     }
 
-    bool operator == (const cmd_pattern& a, const cmd_pattern& b) {
+    bool operator == (const CmdPattern& a, const CmdPattern& b) {
         return (a.pat == b.pat);
     }
 
 
-    game_container::game_container() {
+    GameContainer::GameContainer() {
 
         slot_id = 0;
         pre_score = 0;
@@ -106,9 +106,9 @@ namespace shig {
         height = VI(10, 0);
         strategy_map = VVI(45, (VI(10, 0)));
         strategy_list = vector<strategy>(0);
-        cv = vector<cmd_pattern>(0);
+        cv = vector<CmdPattern>(0);
         cv.reserve(600);
-        ec = vector<cmd_pattern>(0);
+        ec = vector<CmdPattern>(0);
         ec.reserve(10);
         int z = 0;
         string zs = "nothing";
@@ -119,7 +119,7 @@ namespace shig {
         now_ttrp.set_terms(zp);
     }
 
-    bool game_container::set_gc_int(const VI& si) {
+    bool GameContainer::set_gc_int(const VI& si) {
         if (si.size() != 12) return false;
         hold_AI     = si[0];
         current_AI  = si[1];
@@ -137,25 +137,25 @@ namespace shig {
 
     }
 
-    bool game_container::set_gc_VI(const vector<VI>& sv) {
+    bool GameContainer::set_gc_VI(const vector<VI>& sv) {
         if (sv.size() != 1) return false;
         height = sv[0];
         return true;
     }
 
-    bool game_container::set_gc_bool(const vector<bool>& sb) {
+    bool GameContainer::set_gc_bool(const vector<bool>& sb) {
         if (sb.size() != 1) return false;
         ttrp_able = sb[0];
         return true;
     }
 
-    bool game_container::set_gc_next(const VI& nx, const queue<int>& qnx) {
+    bool GameContainer::set_gc_next(const VI& nx, const queue<int>& qnx) {
         next_AI = nx;
         q_next_AI = qnx;
         return true;
     }
 
-    bool game_container::set_gc_field(const vector<VVI>& sf) {
+    bool GameContainer::set_gc_field(const vector<VVI>& sf) {
         if (sf.size() != 3) return false;
         field_AI = sf[0];
         p_field_AI = sf[1];
@@ -163,41 +163,41 @@ namespace shig {
         return true;
     }
 
-    bool game_container::set_gc_ttrp(const tetriplate& st) {
+    bool GameContainer::set_gc_ttrp(const TetriPlate& st) {
         now_ttrp = st;
         return true;
     }
 
-    bool game_container::add_gc_cmdp(const cmd_pattern& cg) {
+    bool GameContainer::add_gc_cmdp(const CmdPattern& cg) {
 
         ec.push_back(cg);
 
         return true;
     }
 
-    cmd_pattern game_container::get_gc_cmdp(int itr) {
+    CmdPattern GameContainer::get_gc_cmdp(int itr) {
         if (itr < 0 || itr >= ec.size()) {
-            return cmd_pattern();
+            return CmdPattern();
         }
         else {
             return ec.at(itr);
         }
     }
 
-    game_container::~game_container() {
+    GameContainer::~GameContainer() {
 
     }
 
     //
 
-	tetri t(0, 3, 21, 0);
-    tetriplate now_ttrp;
-    tetri null_tetri(0, 0, 0, 0);
-    cmd_pattern null_cmd(null_tetri, { 3 }, -1);
+	Tetri t(0, 3, 21, 0);
+    TetriPlate now_ttrp;
+    Tetri null_tetri(0, 0, 0, 0);
+    CmdPattern null_cmd(null_tetri, { 3 }, -1);
 
 
 
-	shigune_AI::shigune_AI(int ii) {
+	AIshigune::AIshigune(int ii) {
         identifier = ii;
 		hold_AI = 0;
 		current_AI = 0;
@@ -225,12 +225,12 @@ namespace shig {
 		strategy_list = vector<strategy>(0);
 		cmd_list = VI(0);
         cmd_list.reserve(40);
-        cv = vector<cmd_pattern>(0);
+        cv = vector<CmdPattern>(0);
         cv.reserve(100);
         cp_itr = cp.begin();
         ttrp_name_list = VS(10, "");
         ttrp_id_list = VI(0, 0);
-        ttrp_list = vector<tetriplate>(0);
+        ttrp_list = vector<TetriPlate>(0);
         ttrp_bgnF = VI(0, 0);
         int z = 0;
         string zs = "nothing";
@@ -240,8 +240,8 @@ namespace shig {
         vector<pairI2> zp(0, make_pair(0, 0));
         now_ttrp.set_terms(zp);
 
-        gc_slot = vector<game_container>(branch_num);
-        now_gc = game_container();
+        gc_slot = vector<GameContainer>(branch_num);
+        now_gc = GameContainer();
         null_tetri.minset(6);
         null_cmd.pat.minset(6);
 
@@ -249,7 +249,7 @@ namespace shig {
 	}
 
 
-	VI shigune_AI::shigune_main() {
+	VI AIshigune::shigune_main() {
 
 		get_state();
 		get_field();
@@ -257,7 +257,7 @@ namespace shig {
 
         set_gc(now_gc);
 
-        cmd_pattern select = explore_choices(now_gc);
+        CmdPattern select = explore_choices(now_gc);
 
         set<int> el = erase_check_AI(select.pat, now_gc);
         int els = (int)el.size(); 
@@ -279,19 +279,19 @@ namespace shig {
 
         bool all_TF = next_crr_check();
 
-        shigune_AI::ttrp_check(select, els, mnL);
+        AIshigune::ttrp_check(select, els, mnL);
 
 		return select.cmd_list;
 	}
 
-	VI shigune_AI::get_cmd() {
+	VI AIshigune::get_cmd() {
 		// hold : 1, soft : 2, hard : 3, L_rot : 4, R_rot : 5, l_move : 6, r_move : 7;
         VI cmd = {};
 
 		return cmd;
 	}
 
-	void shigune_AI::get_field() {
+	void AIshigune::get_field() {
 		shig_rep(i, 45) {
 			shig_rep(j, 10) {
 				field_AI[i][j] = get_field_state(i, j, 1);
@@ -319,7 +319,7 @@ namespace shig {
 		return;
 	}
 
-	void shigune_AI::get_state() {
+	void AIshigune::get_state() {
 		t = get_current();
         current_AI = t.id;
 		pair<int, queue<int>> temp = get_mino_state();
@@ -335,21 +335,21 @@ namespace shig {
 		return;
 	}
 
-	bool shigune_AI::strategy_mark() {
+	bool AIshigune::strategy_mark() {
 
 		if (pc_check())bgn_strategy();
 
 		return true;
 	}
 
-	bool shigune_AI::pc_check() {
+	bool AIshigune::pc_check() {
 		shig_rep(i, 10) {
 			if (field_AI[0][i] != 0)return false;
 		}
 		return true;
 	}
 
-	void shigune_AI::bgn_strategy() {
+	void AIshigune::bgn_strategy() {
 		// I J L O S T Z
         strategy_list.clear();
         //bool all_TF = false;
@@ -434,11 +434,11 @@ namespace shig {
 		return;
 	}
 
-    vector<cmd_pattern> shigune_AI::search_way(game_container gc, int loop) {
+    vector<CmdPattern> AIshigune::search_way(GameContainer gc, int loop) {
         
         constexpr int mxm = 200;
         
-        vector<cmd_pattern> pcv(0);
+        vector<CmdPattern> pcv(0);
         
         if (gc.current_AI == 0)return pcv;
         gc.p_field_AI = gc.field_AI;
@@ -455,7 +455,7 @@ namespace shig {
         }
 
         int w = 0;
-        tetri test;
+        Tetri test;
         while (!search_tree[w].empty() && (w < mxm - 1)) {
             bool can = true;
             int w_size = (int)search_tree[w].size();
@@ -476,7 +476,7 @@ namespace shig {
                 int sft = -1, hd_cnt = 0;
                 while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
                 move_mino(test, 3, gc);
-                cmd_pattern c(test, search_tree[w], parent_tree[w]);
+                CmdPattern c(test, search_tree[w], parent_tree[w]);
                 decltype(gc.cp)::iterator it = gc.cp.find(c);
                 if (it != gc.cp.end()) {
                     w++;
@@ -512,7 +512,7 @@ namespace shig {
                         while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
                         move_mino(test, 3, gc);
                         add_tree.push_back(3);
-                        cmd_pattern c(test, add_tree, w); c.set_isSFT(true);
+                        CmdPattern c(test, add_tree, w); c.set_isSFT(true);
                         decltype(gc.cp)::iterator it = gc.cp.find(c);
                         if (it != gc.cp.end()) continue;
                         get_score(c, gc, loop);
@@ -541,14 +541,14 @@ namespace shig {
 
     }
 
-    void shigune_AI::do_sw(vector<cmd_pattern> &ctl, game_container gc, int loop) {
+    void AIshigune::do_sw(vector<CmdPattern> &ctl, GameContainer gc, int loop) {
 
-        //vector<pair<cmd_pattern, int>> pcv(0);
+        //vector<pair<CmdPattern, int>> pcv(0);
         //pcv.reserve(100);
         //pcv.emplace_back(search_way(gc, loop));
 
         constexpr int mxm = 200;
-        vector<cmd_pattern> pcv(0);
+        vector<CmdPattern> pcv(0);
 
         if (gc.current_AI == 0)return;
         gc.p_field_AI = gc.field_AI;
@@ -565,7 +565,7 @@ namespace shig {
         }
 
         int w = 0;
-        tetri test;
+        Tetri test;
         while (!search_tree[w].empty() && (w < mxm - 1)) {
             bool can = true;
             int w_size = (int)search_tree[w].size();
@@ -586,7 +586,7 @@ namespace shig {
                 int sft = -1, hd_cnt = 0;
                 while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
                 move_mino(test, 3, gc);
-                cmd_pattern c(test, search_tree[w], parent_tree[w]);
+                CmdPattern c(test, search_tree[w], parent_tree[w]);
                 decltype(gc.cp)::iterator it = gc.cp.find(c);
                 if (it != gc.cp.end()) {
                     w++;
@@ -622,7 +622,7 @@ namespace shig {
                         while (move_check(0, sft * (hd_cnt + 1), test, gc)) hd_cnt++;
                         move_mino(test, 3, gc);
                         add_tree.push_back(3);
-                        cmd_pattern c(test, add_tree, w); c.set_isSFT(true);
+                        CmdPattern c(test, add_tree, w); c.set_isSFT(true);
                         decltype(gc.cp)::iterator it = gc.cp.find(c);
                         if (it != gc.cp.end()) continue;
                         get_score(c, gc, loop);
@@ -647,19 +647,19 @@ namespace shig {
 
 
         std::lock_guard<std::mutex> lock(mtx);
-        for (cmd_pattern p : pcv) {
+        for (CmdPattern p : pcv) {
             ctl.push_back(p);
         }
         
         return;
     }
 
-    cmd_pattern shigune_AI::explore_choices(game_container gc_org) {
+    CmdPattern AIshigune::explore_choices(GameContainer gc_org) {
 
-        gc_slot = vector<game_container>(branch_num);
-        vector<vector<cmd_pattern>> branch(branch_num, vector<cmd_pattern>(0));
-        vector<cmd_pattern> catalog(0);
-        constexpr int cls = 100 * branch_num;
+        gc_slot = vector<GameContainer>(branch_num);
+        vector<vector<CmdPattern>> branch(branch_num, vector<CmdPattern>(0));
+        vector<CmdPattern> catalog(0);
+        constexpr int cls = 60 * branch_num;
         catalog.reserve(cls);
 
         gc_org.cp.clear(); gc_org.cv.clear();
@@ -668,7 +668,7 @@ namespace shig {
         //catalog.emplace_back(search_way(gc_org, -1));
         do_sw(ref(catalog), gc_org, -1);
 
-        sort(all(catalog), [&](const cmd_pattern &l, const cmd_pattern &r) { return r.scr < l.scr; });
+        sort(all(catalog), [&](const CmdPattern &l, const CmdPattern &r) { return r.scr < l.scr; });
 
         if (catalog.size() == 0) {
             return null_cmd;
@@ -682,7 +682,7 @@ namespace shig {
                 gc_slot.at(i).slot_id = i;
             }
             for (int i = (int)catalog.size(); i < branch_num; i++) {
-                gc_slot.at(i) = game_container();
+                gc_slot.at(i) = GameContainer();
                 gc_slot.at(i).slot_id = i;
             }
         }
@@ -715,7 +715,7 @@ namespace shig {
             std::vector<std::thread> threads;
 
             for (int i = 0; i < epwtn; i++) {
-                game_container gc = gc_slot.at(i);
+                GameContainer gc = gc_slot.at(i);
                 threads.emplace_back(std::thread([this, &catalog, gc, loop]() {this->do_sw(ref(catalog), gc, loop); }));
             }
 
@@ -723,9 +723,9 @@ namespace shig {
                 thr.join();
             }
 
-            sort(all(catalog), [&](const cmd_pattern &l, const cmd_pattern &r) { return r.scr < l.scr; });
-            vector<game_container> proxy_slot(branch_num);
-            vector<vector<cmd_pattern>> proxy_branch(branch_num, vector<cmd_pattern>(0));
+            sort(all(catalog), [&](const CmdPattern &l, const CmdPattern &r) { return r.scr < l.scr; });
+            vector<GameContainer> proxy_slot(branch_num);
+            vector<vector<CmdPattern>> proxy_branch(branch_num, vector<CmdPattern>(0));
             shig_rep(i, epwtn) {
                 if (catalog.size() <= i || catalog.size() == 0) {
                     branch.at(i).push_back(null_cmd);
@@ -774,16 +774,16 @@ namespace shig {
 
     }
     
-    // �]���l�����߂�
-    void shigune_AI::get_score(cmd_pattern& cd, game_container& gcs, int loopc) {
+    // score evaluating
+    void AIshigune::get_score(CmdPattern& cd, GameContainer& gcs, int loopc) {
 
         cd.scr.init_s();//without sum
 
         //gcs.p_field_AI = gcs.field_AI;
-        //shigune_AI::apply_mino(gcs.p_field_AI, cd.pat); ������Ă���Ă���
+        //AIshigune::apply_mino(gcs.p_field_AI, cd.pat); ������Ă���Ă���
         set<int> L = erase_check_AI(cd.pat, gcs);
 
-        //shigune_AI::height_calc(gcs);
+        //AIshigune::height_calc(gcs);
 
         cd.set_ts(gcs.SRS_kind, gcs.TS_kind);
 
@@ -833,7 +833,7 @@ namespace shig {
         LL ttrp_rate = 1000000000000000;
 
         bool chk_f = false;
-        tetri ofs_cdp = cd.pat;
+        Tetri ofs_cdp = cd.pat;
         ofs_cdp.addY(gcs.ttrp_ofsY);
 
         if (gcs.ttrp_able) {
@@ -1475,13 +1475,13 @@ namespace shig {
         //cd.update(high);
         cd.scr.height = high;
 
-        //cd.update(shigune_AI::gs_BFS(cd, gcs));
-        //cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI);
+        //cd.update(AIshigune::gs_BFS(cd, gcs));
+        //cd.scr.closed = AIshigune::gs_BFS(cd, q_field_AI);
         if (gcs.height_sum < hs || gcs.height_mxm < hm) {
-            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 1500;
+            cd.scr.closed = AIshigune::gs_BFS(cd, q_field_AI) * 1500;
         }
         else {
-            cd.scr.closed = shigune_AI::gs_BFS(cd, q_field_AI) * 1000;
+            cd.scr.closed = AIshigune::gs_BFS(cd, q_field_AI) * 1000;
         }
 
         if (gcs.height_sum < hs && gcs.height_mxm < hm) {
@@ -1519,10 +1519,9 @@ namespace shig {
         return;
     }
 
-    LL shigune_AI::gs_BFS(cmd_pattern& cb, VVI& qf) {
+    LL AIshigune::gs_BFS(CmdPattern& cb, VVI& qf) {
 
         LL open_blc = 0;
-        
         LL clos_blc = 0;
         LL mino_blc = 0;
         LL grbg_blc = 0;
@@ -1566,7 +1565,7 @@ namespace shig {
         LL b_closure = 10000;
         if (clos_blc > 0)b_closure = 0;
         b_closure -= 1000 * clos_blc;
-        b_closure -= 100 * grbg_blc;
+        b_closure -= 500 * grbg_blc;
         b_closure += 0 * open_blc;
 
         b_closure *= 1;
@@ -1575,7 +1574,19 @@ namespace shig {
 
     }
 
-    bool shigune_AI::height_calc(game_container& gch) {
+    LL AIshigune::gs_well(CmdPattern& cp, VVI& qf)
+    {
+
+        LL well = 0;
+
+
+
+
+
+        return LL();
+    }
+
+    bool AIshigune::height_calc(GameContainer& gch) {
         gch.height_sum = 0;
         gch.height_mxm = 0;
         shig_rep(j, 10) {
@@ -1597,7 +1608,7 @@ namespace shig {
         return true;
     }
 
-    bool shigune_AI::move_check(int to_x, int to_y, tetri& s_check, game_container& ggc) {
+    bool AIshigune::move_check(int to_x, int to_y, Tetri& s_check, GameContainer& ggc) {
         int cnt = 0, cntt = 4;
         int rot = s_check.rot;
         int size = s_check.px_size;
@@ -1617,8 +1628,8 @@ namespace shig {
         return cnt == cntt;
     }
 
-    bool shigune_AI::SRS_check(int lr, tetri& now, game_container& ggc) {
-        tetri test = now;
+    bool AIshigune::SRS_check(int lr, Tetri& now, GameContainer& ggc) {
+        Tetri test = now;
         int size = test.px_size;
         int to_X = 0, to_Y = 0, rot = test.rot;
         ggc.SRS_kind = -1;
@@ -2118,7 +2129,7 @@ namespace shig {
 
     }
 
-    int shigune_AI::TS_check(int toX, int toY, tetri& ts, game_container& ggc) {
+    int AIshigune::TS_check(int toX, int toY, Tetri& ts, GameContainer& ggc) {
         if (ts.id != 6) {
             ggc.TS_kind = 0;
             return 0;
@@ -2171,10 +2182,10 @@ namespace shig {
         return ggc.TS_kind;
     }
 
-    set<int> shigune_AI::erase_check_AI(tetri& s_now, game_container &gce) {
+    set<int> AIshigune::erase_check_AI(Tetri& s_now, GameContainer &gce) {
         set<int> erase_itr;
         gce.p_field_AI = gce.field_AI;
-        shigune_AI::apply_mino(gce.p_field_AI, s_now);
+        AIshigune::apply_mino(gce.p_field_AI, s_now);
         int rot = s_now.rot;
         int size = s_now.px_size;
         int H = (int)s_now.mino[rot].size();
@@ -2193,7 +2204,7 @@ namespace shig {
         return erase_itr;
     }
 
-    void shigune_AI::apply_mino(VVI& c_field, tetri& s_now) {
+    void AIshigune::apply_mino(VVI& c_field, Tetri& s_now) {
         int rot = s_now.rot;
         int size = s_now.px_size;
         int H = (int)s_now.mino[rot].size();
@@ -2211,7 +2222,7 @@ namespace shig {
         }
     }
 
-    bool shigune_AI::move_mino(tetri& m_now, int s_action, game_container& ggc) {
+    bool AIshigune::move_mino(Tetri& m_now, int s_action, GameContainer& ggc) {
         int size = m_now.px_size;
         if (s_action == 1) {
             if (ggc.hold_AI == 0) {
@@ -2262,7 +2273,7 @@ namespace shig {
         return true;
     }
 
-    void shigune_AI::print_gh(tetri& s_now) {
+    void AIshigune::print_gh(Tetri& s_now) {
         int rot = s_now.rot;
         int size = s_now.px_size;
         int id = s_now.id;
@@ -2283,7 +2294,7 @@ namespace shig {
         return;
     }
 
-    void shigune_AI::move_itr(int lr) {
+    void AIshigune::move_itr(int lr) {
 
         if (lr == -1) {
             if (cp_itr != cp.begin()) --cp_itr;
@@ -2295,28 +2306,28 @@ namespace shig {
         return;
     }
 
-    VVI shigune_AI::get_AI_field(int p, int m) {
+    VVI AIshigune::get_AI_field(int p, int m) {
         if (p == 1) {
             p_field_AI = field_AI;
         }
         if (m == 1) {
             if (cp_itr == cp.end())--cp_itr;
-            cmd_pattern cm = *cp_itr;
+            CmdPattern cm = *cp_itr;
             print_gh(cm.pat);
         }
         return p_field_AI;
     }
 
-    VI shigune_AI::get_AI_cmd() {
-        cmd_pattern cl = *cp_itr;
+    VI AIshigune::get_AI_cmd() {
+        CmdPattern cl = *cp_itr;
         return cl.cmd_list;
     }
 
-    bool shigune_AI::load_ttrp() {
+    bool AIshigune::load_ttrp() {
         GetTempNameList(ttrp_name_list);
         ttrp_size = (int)ttrp_name_list.size();
         //template_list.reserve(ttrp_size+1);
-        vector<tetriplate> vt(ttrp_size);
+        vector<TetriPlate> vt(ttrp_size);
         shig_rep(i, ttrp_size) {
             ReadTempData(ttrp_name_list[i], vt[i]);
             ttrp_id_list.push_back(vt[i].tp_id);
@@ -2327,7 +2338,7 @@ namespace shig {
         return true;
     }
 
-    bool shigune_AI::ttrp_crr(tetri& now_p, int& size_l) {
+    bool AIshigune::ttrp_crr(Tetri& now_p, int& size_l) {
         bool chk_f = false;
         if (ttrp_able) {
             shig_rep(i, min({ now_ttrp.mino_num , (int)now_ttrp.list_mino.size() })) {
@@ -2360,7 +2371,7 @@ namespace shig {
         return chk_f;
     }
 
-    bool shigune_AI::ttrp_check(cmd_pattern& slc, int& sle, VI& mnL) {
+    bool AIshigune::ttrp_check(CmdPattern& slc, int& sle, VI& mnL) {
 
         if (!ttrp_able)return true;
 
@@ -2422,7 +2433,7 @@ namespace shig {
         return true;
     }
 
-    bool shigune_AI::ttrp_check(cmd_pattern& slc, int& sle, VI& mnL, game_container& gct) {
+    bool AIshigune::ttrp_check(CmdPattern& slc, int& sle, VI& mnL, GameContainer& gct) {
 
         if (!gct.ttrp_able)return true;
 
@@ -2452,7 +2463,7 @@ namespace shig {
         return true;
     }
 
-    bool shigune_AI::next_crr_check() {
+    bool AIshigune::next_crr_check() {
 
         set<int> all_chk;
         int lim_s = min(5, (int)next_AI.size());
@@ -2467,13 +2478,13 @@ namespace shig {
 
     }
 
-    pair<int, string> shigune_AI::get_sttrp_name() {
+    pair<int, string> AIshigune::get_sttrp_name() {
         str = "noting selected";
         if (ttrp_able)return make_pair(now_ttrp.tp_id, now_ttrp.temp_name);
         else return make_pair(i32_minus_one, s);
     }
 
-    bool shigune_AI::set_gc(game_container &gc) {
+    bool AIshigune::set_gc(GameContainer &gc) {
 
         VI gi(12, 0);
         gi[0] = hold_AI;
@@ -2519,20 +2530,20 @@ namespace shig {
         //gc.p_field_AI = p_field_AI;
         //strategy_map = VVI(45, (VI(10, 0)));
         //strategy_list = vector<strategy>(0);
-        //cv = vector<cmd_pattern>(0);
+        //cv = vector<CmdPattern>(0);
         //cv.reserve(600);
-        //ec = vector<cmd_pattern>(0);
+        //ec = vector<CmdPattern>(0);
         //ec.reserve(10);
         
 
         return true;
     }
 
-    game_container shigune_AI::update_gc(cmd_pattern& ct, game_container gcp) {
+    GameContainer AIshigune::update_gc(CmdPattern& ct, GameContainer gcp) {
         
         int rot = ct.pat.rot, size = ct.pat.px_size, H = (int)ct.pat.mino[rot].size(), pW = 10;
 
-        set<int> itr = shigune_AI::erase_check_AI(ct.pat, gcp);
+        set<int> itr = AIshigune::erase_check_AI(ct.pat, gcp);
         int itr_s = (int)itr.size();
 
         //const VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
@@ -2570,7 +2581,7 @@ namespace shig {
         }
         
         
-        shigune_AI::height_calc(gcp);
+        AIshigune::height_calc(gcp);
 
         VI mnL(8, 8);
         mnL[gcp.current_AI] = 0;
@@ -2578,7 +2589,7 @@ namespace shig {
         shig_rep(i, min({ 5, (int)gcp.next_AI.size() })) {
             mnL[gcp.next_AI[i]] = i + 1;
         }
-        shigune_AI::ttrp_check(ct, itr_s, mnL, gcp);
+        AIshigune::ttrp_check(ct, itr_s, mnL, gcp);
 
         if (gcp.combo == 0) {
             if (itr_s == 0) {
@@ -2609,7 +2620,7 @@ namespace shig {
         return gcp;
     }
 
-    int shigune_AI::ttrp_check_mino(tetri& fd, game_container& gcf) {
+    int AIshigune::ttrp_check_mino(Tetri& fd, GameContainer& gcf) {
 
         bool chk_f = false;
 
@@ -2621,7 +2632,7 @@ namespace shig {
 
     }
 
-	shigune_AI::~shigune_AI() {
+	AIshigune::~AIshigune() {
 
 	}
 
@@ -2660,7 +2671,7 @@ bool GetTempNameList(VS& name_list) {
 
 }
 
-bool ReadTempData(string& name, tetriplate& ttrp) {
+bool ReadTempData(string& name, TetriPlate& ttrp) {
 
     const char* fname = name.c_str();
     FILE* fp = NULL;
@@ -2669,7 +2680,7 @@ bool ReadTempData(string& name, tetriplate& ttrp) {
         int z = 0;
         string zs = "";
         ttrp.set(z, z, z, z, zs, z);
-        vector<tetri> zt = { tetri(0, 0, 0, 0) };
+        vector<Tetri> zt = { Tetri(0, 0, 0, 0) };
         VI zts(0, 0);
         ttrp.set_list(zt, zts);
         VI zv(0, 0);
@@ -2692,12 +2703,12 @@ bool ReadTempData(string& name, tetriplate& ttrp) {
         ttrp.set(l, ls, id, tn, rtdS, bf);
 
         //
-        vector<tetri> tpl(l);
+        vector<Tetri> tpl(l);
         VI ts(l);
         shig_rep(i, l) {
             int r, x, y, d, s;
             fscanf_s(fp, "%d %d %d %d %d", &r, &x, &y, &d, &s);
-            tetri tp(r, x, y, d);
+            Tetri tp(r, x, y, d);
             tpl[i] = tp;
             ts[i] = s;
         }

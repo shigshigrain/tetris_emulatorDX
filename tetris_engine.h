@@ -25,16 +25,16 @@ typedef vector<string> VS;
 #define str string s
 
 
-struct tetri {
+struct Tetri {
     int rot = 0;
     int X = 0, Y = 0;
     int id = 0;
     int px_size = 30;
     
-    tetri() {
+    Tetri() {
         minset(6);
     };
-    tetri(int rot, int X, int Y, int id) : rot(rot), X(X), Y(Y), id(id) {};
+    Tetri(int rot, int X, int Y, int id) : rot(rot), X(X), Y(Y), id(id) {};
 
     VVVI mino;
 
@@ -173,7 +173,7 @@ struct tetri {
         }
     }
 
-    bool operator < (const tetri& ath) const {
+    bool operator < (const Tetri& ath) const {
         if (id < ath.id)return true;
         else if (id > ath.id)return false;
         else {
@@ -191,7 +191,7 @@ struct tetri {
         }
     }
 
-    bool operator == (const tetri& ath) const {
+    bool operator == (const Tetri& ath) const {
         if(id == 4 && ath.id == 4)return (X == ath.X && Y == ath.Y);
         return (id == ath.id && X == ath.X && Y == ath.Y && rot == ath.rot);
     }
@@ -211,9 +211,9 @@ int shig_floorI(int i, int target);
 int shig_ceilI(int i, int target);
 bool add_garbage(int line);
 bool make_garbage(int X, int Y, bool sft);
-void tspin_check(int toX, int toY, tetri& ts);
+void tspin_check(int toX, int toY, Tetri& ts);
 bool move_check(int toX, int toY);
-bool move_check(int toX, int toY, tetri& check);
+bool move_check(int toX, int toY, Tetri& check);
 void SRS_rot(int lr);
 void print_mino(int p);
 void print_ghost(int p);
@@ -235,7 +235,7 @@ void reset_pfield();
 int game(int action);
 int get_field_state(int i, int j, int m);
 pair<int, queue<int>> get_mino_state();
-tetri get_current();
+Tetri get_current();
 int get_delayF();
 void edit_garbage_cmd(int i);
 VI get_game_state();

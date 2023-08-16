@@ -56,7 +56,7 @@ int garbage_cmd = 0;
 VS ts_state(2);
 deque<string> mino_his;
 
-tetri now(0, 3, 21, 0);
+Tetri now(0, 3, 21, 0);
 
 template <typename T>
 int binaryS(const vector<T> &v, const T key) {
@@ -166,7 +166,7 @@ bool make_garbage(int X, int Y, bool sft) {
     return true;
 }
 
-void tspin_check(int toX, int toY, tetri& ts) {
+void tspin_check(int toX, int toY, Tetri& ts) {
     if (ts.id != 6) {
         ts_kind = 0;
         return;
@@ -244,7 +244,7 @@ bool move_check(int toX, int toY) {
     else return false;
 }
 
-bool move_check(int toX, int toY, tetri& check) {
+bool move_check(int toX, int toY, Tetri& check) {
     int cnt = 0, cntt = 4;
     int rot = check.rot;
     int size = check.px_size;
@@ -266,7 +266,7 @@ bool move_check(int toX, int toY, tetri& check) {
 }
 
 void SRS_rot(int lr) {//l=-1 r=1
-    tetri test = now;
+    Tetri test = now;
     int size = test.px_size;
     int to_X = 0, to_Y = 0, rot = test.rot;
     bool can = true;
@@ -787,7 +787,7 @@ void print_mino(int p) {
 }
 
 void print_ghost(int p) {
-    tetri ghost_mino = now;
+    Tetri ghost_mino = now;
     int sft = -1;
     while (move_check(0, sft, ghost_mino))ghost_mino.addY(sft);
     int rot = ghost_mino.rot;
@@ -1105,7 +1105,7 @@ pair<int, queue<int>> get_mino_state() {
     return make_pair(hold, q_next);
 }
 
-tetri get_current() {
+Tetri get_current() {
     return now;
 }
 
