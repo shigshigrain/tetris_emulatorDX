@@ -120,7 +120,7 @@ namespace shig {
     }
 
     bool GameContainer::set_gc_int(const VI& si) {
-        if (si.size() != 12) return false;
+        if ((int)si.size() != 12) return false;
         hold_AI     = si[0];
         current_AI  = si[1];
         pc_cnt      = si[2];
@@ -138,13 +138,13 @@ namespace shig {
     }
 
     bool GameContainer::set_gc_VI(const vector<VI>& sv) {
-        if (sv.size() != 1) return false;
+        if ((int)sv.size() != 1) return false;
         height = sv[0];
         return true;
     }
 
     bool GameContainer::set_gc_bool(const vector<bool>& sb) {
-        if (sb.size() != 1) return false;
+        if ((int)sb.size() != 1) return false;
         ttrp_able = sb[0];
         return true;
     }
@@ -156,7 +156,7 @@ namespace shig {
     }
 
     bool GameContainer::set_gc_field(const vector<VVI>& sf) {
-        if (sf.size() != 3) return false;
+        if ((int)sf.size() != 3) return false;
         field_AI = sf[0];
         p_field_AI = sf[1];
         strategy_map = sf[2];
@@ -670,7 +670,7 @@ namespace shig {
 
         sort(all(catalog), [&](const CmdPattern &l, const CmdPattern &r) { return r.scr < l.scr; });
 
-        if (catalog.size() == 0) {
+        if ((int)catalog.size() == 0) {
             return null_cmd;
         }
         else if ((int)catalog.size() < branch_num && (int)catalog.size() > 0) {
@@ -727,7 +727,7 @@ namespace shig {
             vector<GameContainer> proxy_slot(branch_num);
             vector<vector<CmdPattern>> proxy_branch(branch_num, vector<CmdPattern>(0));
             shig_rep(i, epwtn) {
-                if (catalog.size() <= i || catalog.size() == 0) {
+                if ((int)catalog.size() <= i || (int)catalog.size() == 0) {
                     branch.at(i).push_back(null_cmd);
                     proxy_slot.at(i) = update_gc(null_cmd, gc_slot.at(0));
                     proxy_slot.at(i).slot_id = i;
@@ -745,18 +745,18 @@ namespace shig {
 
             int mid = (int)catalog.size() / 2;
             for (int i = 0; i < branch_num - epwtn; i++) {
-                if (catalog.size() <= i + mid || catalog.size() == 0) {
-                    branch.at(epwtn + i).push_back(null_cmd);
-                    proxy_slot.at(epwtn + i) = update_gc(null_cmd, gc_slot.at(0));
-                    proxy_slot.at(epwtn + i).slot_id = epwtn + i;
+                if ((int)catalog.size() <= i + mid || (int)catalog.size() == 0) {
+                    branch.at((size_t)(epwtn + i)).push_back(null_cmd);
+                    proxy_slot.at((size_t)(epwtn + i)) = update_gc(null_cmd, gc_slot.at(0));
+                    proxy_slot.at((size_t)(epwtn + i)).slot_id = epwtn + i;
                 }
                 else {
                     //auto [pct, ci] = catalog.at(i);
                     int ci = catalog.at(i + mid).pre_gc;
-                    proxy_branch.at(epwtn + i) = branch.at(ci);
-                    proxy_branch.at(epwtn + i).push_back(catalog.at(i + mid));
-                    proxy_slot.at(epwtn + i) = update_gc(catalog.at(i + mid), gc_slot.at(ci));
-                    proxy_slot.at(epwtn + i).slot_id = epwtn + i;
+                    proxy_branch.at((size_t)(epwtn + i)) = branch.at(ci);
+                    proxy_branch.at((size_t)(epwtn + i)).push_back(catalog.at((size_t)(i + mid)));
+                    proxy_slot.at((size_t)(epwtn + i)) = update_gc(catalog.at((size_t)(i + mid)), gc_slot.at(ci));
+                    proxy_slot.at((size_t)(epwtn + i)).slot_id = epwtn + i;
                 }
             }
 
@@ -766,7 +766,7 @@ namespace shig {
 
         }
 
-        if (catalog.size() == 0)return null_cmd;
+        if ((int)catalog.size() == 0)return null_cmd;
         //auto [r, ri] = catalog.at(0);
         int ri = catalog.at(0).pre_gc;
         return branch.at(ri).front();
@@ -788,12 +788,12 @@ namespace shig {
         cd.set_ts(gcs.SRS_kind, gcs.TS_kind);
 
         VVI q_field_AI(0); q_field_AI.reserve(45);
-        if (L.size() > 0) {
+        if ((int)L.size() > 0) {
             shig_rep(i, fh) {
                 decltype(L)::iterator it = L.find(i);
                 if (it == L.end()) q_field_AI.push_back(gcs.p_field_AI[i]);
             }
-            while (q_field_AI.size() < fh) q_field_AI.push_back(ev_empty);
+            while ((int)q_field_AI.size() < fh) q_field_AI.push_back(ev_empty);
         }
         else {
             q_field_AI = VVI(gcs.p_field_AI);
@@ -1620,7 +1620,7 @@ namespace shig {
                     int sX = s_check.X + j + to_x;
                     if (sX < 0 || sX >= 10)break;
                     int sY = s_check.Y - i + to_y;
-                    if (sY <= 0 || sY >= (ggc.field_AI.size() - 1))break;
+                    if (sY <= 0 || sY >= ((int)ggc.field_AI.size() - 1))break;
                     if (ggc.field_AI[sY - 1LL][sX] == 0)cnt++;
                 }
             }
@@ -2129,7 +2129,7 @@ namespace shig {
 
     }
 
-    int AIshigune::TS_check(int toX, int toY, Tetri& ts, GameContainer& ggc) {
+    int AIshigune::TS_check(int toX, int toY, Tetri& ts, GameContainer& ggc){
         if (ts.id != 6) {
             ggc.TS_kind = 0;
             return 0;
@@ -2146,7 +2146,7 @@ namespace shig {
                 continue;
             }
             int sY = ts.Y - testY[i] + toY - 1;
-            if (sY < 0 || sY >= (ggc.field_AI.size() - 1)) {
+            if (sY < 0 || sY >= ((int)ggc.field_AI.size() - 1)) {
                 ts_cnt++;
                 continue;
             }
@@ -2338,7 +2338,7 @@ namespace shig {
         return true;
     }
 
-    bool AIshigune::ttrp_crr(Tetri& now_p, int& size_l) {
+    bool AIshigune::ttrp_crr(Tetri& now_p, int& size_l){
         bool chk_f = false;
         if (ttrp_able) {
             shig_rep(i, min({ now_ttrp.mino_num , (int)now_ttrp.list_mino.size() })) {
@@ -2470,8 +2470,8 @@ namespace shig {
         shig_rep(i, lim_s)all_chk.insert(next_AI[i]);
         all_chk.insert(current_AI);
         all_chk.insert(hold_AI);
-        if (all_chk.size() == 7)return true;
-        else if (hold_AI == 0 && all_chk.size() == 6)return true;
+        if ((int)all_chk.size() == 7)return true;
+        else if (hold_AI == 0 && (int)all_chk.size() == 6)return true;
         else return false;
 
         return false;
@@ -2553,12 +2553,12 @@ namespace shig {
             decltype(itr)::iterator it = itr.find(i);
             if (it == itr.end()) proxy.push_back(gcp.p_field_AI[i]);
         }
-        while (proxy.size() < fh) proxy.push_back(ev_empty);
+        while ((int)proxy.size() < fh) proxy.push_back(ev_empty);
 
         gcp.field_AI = proxy;
 
         if (ct.cmd_list.at(0) == 1) gcp.hold_AI = gcp.current_AI;
-        if (gcp.q_next_AI.size() == 0) {
+        if ((int)gcp.q_next_AI.size() == 0) {
             //gcp.current_AI = 0;
             //*
             shig_rep(i, NS_a.size()) {
@@ -2567,7 +2567,7 @@ namespace shig {
             //*/
         }
         
-        if (gcp.q_next_AI.size() != 0) {
+        if ((int)gcp.q_next_AI.size() != 0) {
             gcp.current_AI = gcp.q_next_AI.front();
             gcp.q_next_AI.pop();  gcp.next_AI.clear();
             while (!gcp.q_next_AI.empty()) {

@@ -1069,6 +1069,7 @@ namespace shig {
 		CmdPattern explore_choices(GameContainer gc_org);
 		void get_score(CmdPattern& cd, GameContainer& gcs, int loopc);
 		LL gs_BFS(CmdPattern& cb, VVI& qf);
+		LL gs_well(CmdPattern& cp, VVI& qf);
 		bool height_calc(GameContainer& gch);
 		bool move_check(int to_x, int to_y, Tetri& s_check, GameContainer& ggc);
 		bool SRS_check(int lr, Tetri& s_now, GameContainer& ggc);

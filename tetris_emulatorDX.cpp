@@ -259,7 +259,7 @@ static LRESULT CALLBACK WndProcHook(HWND handle, UINT msg, WPARAM wParam, LPARAM
 }
 
 void act_ref(int i, VI& check) {
-    int size = check.size();
+    int size = (int)check.size();
     shig_rep(j, size) {
         if (j == 0)continue;
         check[j]++;
