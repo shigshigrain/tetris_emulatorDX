@@ -870,7 +870,7 @@ int line_erase() {
 
     field = proxy;
 
-    int s = itr.size();
+    int s = (int)itr.size();
 
     if (s > 0 && ts_kind > 0) {
         combo++;

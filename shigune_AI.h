@@ -394,7 +394,7 @@ const vector<vector<vector<pair<int, int>>>> touch_list = {
 			{1 ,0},
 			{0, -1}
 		}
-	
+
 	},
 	// O
 	{
@@ -563,7 +563,7 @@ const vector<vector<vector<pair<int, int>>>> touch_list = {
 			{3, 2},
 			{3, 0},
 			{2, -1},
-			
+
 			{0, 0},
 			{0, 1},
 			{0, 2},
@@ -580,7 +580,7 @@ const vector<vector<vector<pair<int, int>>>> touch_list = {
 			{3, 0},
 			{2, -1},
 			{0, -1},
-			
+
 			{-1, 1},
 			{0, 2},
 			{1, 2},
@@ -662,39 +662,39 @@ const vector<vector<vector<pair<int, int>>>> touch_list = {
 };
 
 struct cmd_score {
-	
+
 	LL sum = 0;
 
-	LL height  = 0;
-	LL touch   = 0;
+	LL height = 0;
+	LL touch = 0;
 	LL contact = 0;
-	LL erase   = 0;
-	LL cmb     = 0;
-	LL btbc    = 0;
-	LL closed  = 0;
-	LL PC      = 0;
+	LL erase = 0;
+	LL cmb = 0;
+	LL btbc = 0;
+	LL closed = 0;
+	LL PC = 0;
 
 	cmd_score() {
-		height  = 0;
-		touch   = 0;
+		height = 0;
+		touch = 0;
 		contact = 0;
-		erase   = 0;
-		cmb     = 0;
-		btbc    = 0;
-		closed  = 0;
-		PC      = 0;
+		erase = 0;
+		cmb = 0;
+		btbc = 0;
+		closed = 0;
+		PC = 0;
 	}
 
 
 	bool init() {
-		height  = 0;
-		touch   = 0;
+		height = 0;
+		touch = 0;
 		contact = 0;
-		erase   = 0;
-		cmb     = 0;
-		btbc    = 0;
-		closed  = 0;
-		PC      = 0;
+		erase = 0;
+		cmb = 0;
+		btbc = 0;
+		closed = 0;
+		PC = 0;
 		return true;
 	}
 
@@ -744,7 +744,7 @@ struct cmd_score {
 	}
 
 	bool operator < (const cmd_score& ath) const {
-		
+
 		if (sum != ath.sum)return sum < ath.sum;
 		else {
 			if (PC != ath.PC)return PC < ath.PC;
@@ -789,7 +789,7 @@ struct CmdPattern {
 
 	CmdPattern() {};
 	CmdPattern(const Tetri& p, const VI& list, const int& d) : pat(p), cmd_list(list), index(d) {};
-	
+
 	void update() {
 		score += scr.get_sum();
 		return;
@@ -839,7 +839,7 @@ struct CmdPattern {
 struct strategy {
 	int id = 0;
 	/*
-	 
+
 	-10:
 	-9:
 	-8:
@@ -849,9 +849,9 @@ struct strategy {
 	-4:
 	-3:
 	-2:
-	-1:?J??TSD
-	0:?p?t?F
-	1:?e?g???X????
+	-1:
+	0:
+	1:
 	2:TSS
 	3:TSS-mini
 	4:TSD
@@ -859,7 +859,7 @@ struct strategy {
 	6:TST
 	7:STSD
 	8:DT
-	9:?C???y???A???N???X
+	9:
 	10:
 	11:
 	12:
@@ -912,7 +912,7 @@ struct TetriPlate {
 	}
 
 
-	bool set_terms(vector<pairI2>& tr){
+	bool set_terms(vector<pairI2>& tr) {
 		terms = tr;
 		return true;
 	}
@@ -960,7 +960,7 @@ namespace shig {
 
 		void update(LL u);
 
-		void set_ttrpF(int& sf);
+		void set_ttrpF(int sf);
 
 		void set_isSFT(const bool& sf);
 
@@ -1061,11 +1061,13 @@ namespace shig {
 		VI get_cmd();
 		void get_field();
 		void get_state();
+		VI make_order_list();
+		VI make_order_list(GameContainer &gc);
 		bool strategy_mark();
 		bool pc_check();
 		void bgn_strategy();
 		vector<CmdPattern> search_way(GameContainer gc, int loop);
-		void do_sw(vector<CmdPattern> &ctl, GameContainer gc, int loop);
+		void do_sw(vector<CmdPattern>& ctl, GameContainer gc, int loop);
 		CmdPattern explore_choices(GameContainer gc_org);
 		void get_score(CmdPattern& cd, GameContainer& gcs, int loopc);
 		LL gs_BFS(CmdPattern& cb, VVI& qf);
@@ -1074,7 +1076,7 @@ namespace shig {
 		bool move_check(int to_x, int to_y, Tetri& s_check, GameContainer& ggc);
 		bool SRS_check(int lr, Tetri& s_now, GameContainer& ggc);
 		int TS_check(int toX, int toY, Tetri& ts, GameContainer& ggc);
-		set<int> erase_check_AI(Tetri& s_now, GameContainer &gce);
+		set<int> erase_check_AI(Tetri& s_now, GameContainer& gce);
 		void apply_mino(VVI& c_field, Tetri& s_now);
 		bool move_mino(Tetri& m_now, int s_action, GameContainer& ggc);
 		void print_gh(Tetri& s_now);
@@ -1084,10 +1086,11 @@ namespace shig {
 		pair<int, string> get_sttrp_name();
 		bool load_ttrp();
 		bool ttrp_crr(Tetri& now_p, int& size_l);
+		bool ttrp_check(CmdPattern& slc, int& sle);
 		bool ttrp_check(CmdPattern& slc, int& sle, VI& mnL);
-		bool ttrp_check(CmdPattern& slc, int& sle, VI& mnL, GameContainer& gct);
+		bool ttrp_check(CmdPattern& slc, int& sle, GameContainer& gct);
 		bool next_crr_check();
-		bool set_gc(GameContainer &gc);
+		bool set_gc(GameContainer& gc);
 		GameContainer update_gc(CmdPattern& ct, GameContainer gcp);
 		int ttrp_check_mino(Tetri& fd, GameContainer& gcf);
 
