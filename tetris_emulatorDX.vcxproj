@@ -145,7 +145,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\sykws\source\repos\tetris_emulatorDX_AI\tetris_emulatorDX.h;C:\Users\sykws\source\repos\tetris_emulatorDX_AI;C:\DxLibNoneModel_NoneSoftDrawCode_VC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/arch:AVX2 %(AdditionalOptions)</AdditionalOptions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
@@ -218,6 +218,18 @@
     <None Include="template\data\gamusiroZ_1-1.ttrp" />
     <None Include="template\data\gamusiroZ_2-1.ttrp" />
     <None Include="template\data\gamusiroZ_2-2.ttrp" />
+    <None Include="template\data\HachimitsuS_1-0.ttrp" />
+    <None Include="template\data\HachimitsuS_1-3.ttrp" />
+    <None Include="template\data\HachimitsuS_2-1_T.ttrp" />
+    <None Include="template\data\HachimitsuS_2-2_T.ttrp" />
+    <None Include="template\data\HachimitsuS_2-3_T.ttrp" />
+    <None Include="template\data\HachimitsuS_2-4_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_1-0.ttrp" />
+    <None Include="template\data\HachimitsuZ_1-3.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-1_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-2_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-3_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-4_T.ttrp" />
     <None Include="template\data\hotcakeS_1-1.ttrp" />
     <None Include="template\data\hotcakeS_2-1.ttrp" />
     <None Include="template\data\hotcakeS_2-2.ttrp" />

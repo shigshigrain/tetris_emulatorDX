@@ -903,7 +903,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     ChangeWindowMode(TRUE);
     SetWindowSizeChangeEnableFlag(TRUE);
     SetAlwaysRunFlag(TRUE);
-    SetMainWindowText(_T("tetris_emulator ver 3.7.4"));
+    SetMainWindowText(_T("tetris_emulator ver 3.7.5"));
    
     // ameyasu's suggestion
     SetHookWinProc(WndProcHook);

@@ -7,7 +7,9 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <array>
 #include <utility>
+#include <numeric>
 #include <queue>
 #include <deque>
 #include <random>

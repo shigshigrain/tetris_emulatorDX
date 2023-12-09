@@ -1055,6 +1055,8 @@ namespace shig {
 
 		GameContainer now_gc;
 
+		std::mt19937_64 Rengine;
+
 	public:
 		AIshigune(int ii);
 		VI shigune_main();

@@ -4,7 +4,7 @@ int i32_zero = 0;
 int i32_one = 1;
 int i32_minus_one = -1;
 const int branch_num = 40;//branch_num >= 30
-const vector<int> expl_width = { 40, 40, 40, 30, 20, 20, 15, 10, 10, 10, 10, 10, 10, 10, 10 };
+const vector<int> expl_width = { 40, 40, 40, 30, 30, 30, 30, 10, 10, 10, 10, 10, 10, 10, 10 };
 //const vector<int> expl_width = { 20, 20, 20, 20, 20, 20, 20, 20, 15, 15, 15, 10, 10, 10, 10 };
 const int cyc_num = 7;//up to 14
 const int fh = 45;
@@ -242,7 +242,8 @@ namespace shig {
         now_gc = GameContainer();
         null_tetri.minset(6);
         null_cmd.pat.minset(6);
-
+        std::random_device Sg;
+        Rengine = std::mt19937_64(Sg());
 
     }
 
@@ -540,7 +541,7 @@ namespace shig {
         //pcv.reserve(100);
         //pcv.emplace_back(search_way(gc, loop));
 
-        constexpr int mxm = 200;
+        constexpr int mxm = 400;
         vector<CmdPattern> pcv(0);
 
         if (gc.current_AI == 0)return;
@@ -561,8 +562,6 @@ namespace shig {
         Tetri test;
         while (!search_tree[w].empty() && (w < mxm - 1)) {
             bool can = true;
-            int w_size = (int)search_tree[w].size();
-
 
             if (parent_tree[w] == w) {
                 test.minset(gc.current_AI);
@@ -658,10 +657,13 @@ namespace shig {
         gc_org.cp.clear(); gc_org.cv.clear();
         //catalog.clear();
 
-        //catalog.emplace_back(search_way(gc_org, -1));
-        do_sw(ref(catalog), gc_org, -1);
+        static const size_t frt = 25;
 
-        sort(all(catalog), [&](const CmdPattern& l, const CmdPattern& r) { return r.scr < l.scr; });
+        //catalog.emplace_back(search_way(gc_org, -1));
+        // 1„–Ú’Tõ
+        do_sw(std::ref(catalog), gc_org, -1);
+
+        std::sort(all(catalog), [&](const CmdPattern& l, const CmdPattern& r) { return r.scr < l.scr; });
 
         if ((int)catalog.size() == 0) {
             return null_cmd;
@@ -680,25 +682,37 @@ namespace shig {
             }
         }
         else {
-            static const int frt = 15;
-            shig_rep(i, frt) { //
+            
+            
+            for (size_t i = 0; i < frt; i++) { //
                 //auto [pct, ci] = catalog.at(i);
                 branch.at(i).push_back(catalog.at(i));
                 gc_slot.at(i) = update_gc(catalog.at(i), gc_org);
                 gc_slot.at(i).slot_id = i;
             }
 
-            int mid = (int)(catalog.size() / 2);
+            std::vector<int> RndChoise(catalog.size() - frt, 0);
+            std::iota(RndChoise.begin(), RndChoise.end(), 0);
+            std::shuffle(RndChoise.begin(), RndChoise.end(), Rengine);
+
+            for (size_t i = 0; i < std::min(branch_num - frt, RndChoise.size()); i++) { //
+                branch.at(i + frt).push_back(catalog.at(RndChoise.at(i)));
+                gc_slot.at(i + frt) = update_gc(catalog.at(RndChoise.at(i)), gc_org);
+                gc_slot.at(i + frt).slot_id = i + frt;
+            }
+
+            /*int mid = (int)(catalog.size() / 2);
 
             for (int i = 0; i < branch_num - frt; i++) {
                 branch.at((size_t)(frt + i)).push_back(catalog.at((size_t)(i + mid)));
                 gc_slot.at((size_t)(frt + i)) = update_gc(catalog.at((size_t)(i + mid)), gc_org);
                 gc_slot.at((size_t)(frt + i)).slot_id = frt + i;
-            }
+            }*/
 
 
         }
 
+        // 2„–ÚˆÈ~‚Ìæ“Ç‚Ýƒ‹[ƒv
         shig_rep(n, exp_cyc_lim - 1) {
             catalog.clear(); catalog.reserve(cls);
 
@@ -736,22 +750,33 @@ namespace shig {
 
             }
 
-            int mid = (int)catalog.size() / 2;
-            for (int i = 0; i < branch_num - epwtn; i++) {
-                if ((int)catalog.size() <= i + mid || (int)catalog.size() == 0) {
-                    branch.at((size_t)(epwtn + i)).push_back(null_cmd);
-                    proxy_slot.at((size_t)(epwtn + i)) = update_gc(null_cmd, gc_slot.at(0));
-                    proxy_slot.at((size_t)(epwtn + i)).slot_id = epwtn + i;
-                }
-                else {
-                    //auto [pct, ci] = catalog.at(i);
-                    int ci = catalog.at((size_t)(i + mid)).pre_gc;
-                    proxy_branch.at((size_t)(epwtn + i)) = branch.at(ci);
-                    proxy_branch.at((size_t)(epwtn + i)).push_back(catalog.at((size_t)(i + mid)));
-                    proxy_slot.at((size_t)(epwtn + i)) = update_gc(catalog.at((size_t)(i + mid)), gc_slot.at(ci));
-                    proxy_slot.at((size_t)(epwtn + i)).slot_id = epwtn + i;
-                }
+            std::vector<int> RndChoise(catalog.size() - frt, 0);
+            std::iota(RndChoise.begin(), RndChoise.end(), 0);
+            std::shuffle(RndChoise.begin(), RndChoise.end(), Rengine);
+
+            for (size_t i = 0; i < std::min(branch_num - frt, RndChoise.size()); i++) { //
+                branch.at(i + frt).push_back(catalog.at(RndChoise.at(i)));
+                gc_slot.at(i + frt) = update_gc(catalog.at(RndChoise.at(i)), gc_org);
+                gc_slot.at(i + frt).slot_id = i + frt;
             }
+
+
+            //int mid = (int)catalog.size() / 2;
+            //for (int i = 0; i < branch_num - epwtn; i++) {
+            //    if ((int)catalog.size() <= i + mid || (int)catalog.size() == 0) {
+            //        branch.at((size_t)(epwtn + i)).push_back(null_cmd);
+            //        proxy_slot.at((size_t)(epwtn + i)) = update_gc(null_cmd, gc_slot.at(0));
+            //        proxy_slot.at((size_t)(epwtn + i)).slot_id = epwtn + i;
+            //    }
+            //    else {
+            //        //auto [pct, ci] = catalog.at(i);
+            //        int ci = catalog.at((size_t)(i + mid)).pre_gc;
+            //        proxy_branch.at((size_t)(epwtn + i)) = branch.at(ci);
+            //        proxy_branch.at((size_t)(epwtn + i)).push_back(catalog.at((size_t)(i + mid)));
+            //        proxy_slot.at((size_t)(epwtn + i)) = update_gc(catalog.at((size_t)(i + mid)), gc_slot.at(ci));
+            //        proxy_slot.at((size_t)(epwtn + i)).slot_id = epwtn + i;
+            //    }
+            //}
 
 
             gc_slot = proxy_slot;
@@ -796,8 +821,9 @@ namespace shig {
         LL contact = 0;
         LL touch = 0;
         LL high = 0;
-        //LL cmb = 0;
         LL btbc = 0;
+
+        //LL cmb = 0;
 
         int rot = cd.pat.rot;
         int idnt = cd.pat.id - 1;
@@ -823,7 +849,7 @@ namespace shig {
 
         if (isPC)cd.scr.sum = shig::secure_add(1145141919810000LL, cd.scr.sum);
 
-        LL ttrp_rate = 10000000000000000;
+        LL ttrp_rate = 1000000000000000;
 
         bool chk_f = false;
         Tetri ofs_cdp = cd.pat;
@@ -1236,14 +1262,14 @@ namespace shig {
 
 
         //cmb
-        LL cmb_rate = 100;
+        LL cmb_rate = 10000000;
         if (gcs.combo * L.size() > 0) {
-            LL c = (cmb_rate * 10LL * (gcs.combo + 1));
+            LL c = (cmb_rate * 10LL * (gcs.combo + 1LL));
             cd.scr.cmb = shig::secure_add(cd.scr.cmb, c);
 
         }
         else if (gcs.combo > 0 && L.size() == 0) {
-            LL c = (cmb_rate * -10LL * (gcs.combo + 1));
+            LL c = (cmb_rate * -10LL * (gcs.combo + 1LL));
             cd.scr.cmb = shig::secure_add(cd.scr.cmb, c);
         }
         else if (gcs.combo == 0 && L.size() == 0) {
@@ -1259,11 +1285,11 @@ namespace shig {
         LL ve = 0;
         if (L.size() == 0) {
 
-            if (gcs.height_sum > 120 || gcs.height_mxm > 15) {
+            if (gcs.height_sum > 144 || gcs.height_mxm > 16) {
                 ve += 50;
 
             }
-            else if (gcs.height_sum > 80 || gcs.height_mxm > 10) {
+            else if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
                 ve += 500;
                 /*
                 if (cd.pat.id == 6)ve += 200;
@@ -1271,7 +1297,7 @@ namespace shig {
                 */
 
             }
-            else if (gcs.height_sum > 40 || gcs.height_mxm > 5) {
+            else if (gcs.height_sum > 64 && gcs.height_mxm > 8) {
                 ve += 2000;
                 if (cd.pat.id == 6)ve += -800;
                 else if (cd.pat.id == 1)ve += -400;
@@ -1288,19 +1314,22 @@ namespace shig {
         else if (L.size() == 1) {
             if (gcs.TS_kind == 1) {
 
-                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
-                    ve += 10000;
+                if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
+                    ve += 20000;
+                }
+                else if (gcs.height_sum > 64 && gcs.height_mxm > 8) {
+                    ve += 100000;
                 }
                 else {
-                    ve += 200000;
+                    ve += 50000;
                 }
 
-                if (gcs.btb > -1)btbc += 10000;
+                if (gcs.btb > -1)btbc += 1000;
 
             }
             else if (gcs.TS_kind == 2) {
 
-                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
+                if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
                     ve += 500;
                 }
                 else {
@@ -1311,13 +1340,13 @@ namespace shig {
             }
             else {
 
-                if (gcs.height_sum > hs && gcs.height_mxm > hm) {
-                    ve += 500;
+                if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
+                    ve +=1000;
                     if (cd.pat.id == 1) {
-                        ve += 500;
+                        ve += 1000;
                     }
                 }
-                else if (gcs.height_sum < 48 || gcs.height_mxm < 6) {
+                else if (gcs.height_sum > 64 && gcs.height_mxm > 8) {
                     ve += -10000;
                     if (cd.pat.id == 6) {
                         ve += -1000;
@@ -1327,35 +1356,38 @@ namespace shig {
                     }
                 }
                 else {
-                    ve += -40000;
+                    ve += -50000;
                     if (cd.pat.id == 6) {
-                        ve += -1000;
+                        ve += -20000;
                     }
                     else if (cd.pat.id == 1) {
-                        ve += -2000;
+                        ve += -10000;
                     }
                 }
 
-                if (gcs.btb > -1)btbc += -1000;
+                if (gcs.btb > -1)btbc += -3000;
 
             }
         }
         else if (L.size() == 2) {
             if (gcs.TS_kind == 1) {
 
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
                     ve += 300000;
                 }
+                else if (gcs.height_sum > 64 && gcs.height_mxm > 8) {
+                    ve += 400000000;
+                }
                 else {
-                    ve += 1000000000;
+                    ve += 2000000000;
                 }
 
-                if (gcs.btb > -1)btbc += 1000000;
+                if (gcs.btb > -1)btbc += 10000000;
 
             }
             else if (gcs.TS_kind == 2) {
                 ve += 200;
-                if (gcs.height_sum > 72 || gcs.height_mxm > 8) {
+                if (gcs.height_sum > 72 && gcs.height_mxm > 8) {
                     ve -= 500;
                 }
 
@@ -1364,7 +1396,7 @@ namespace shig {
             }
             else {
 
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
                     ve += 2000;
 
                     if (cd.pat.id == 6) {
@@ -1375,7 +1407,7 @@ namespace shig {
                     }
 
                 }
-                else if (gcs.height_sum > 48 || gcs.height_mxm > 6) {
+                else if (gcs.height_sum > 64 && gcs.height_mxm > 8) {
                     ve += -12000;
                     if (cd.pat.id == 6) {
                         ve += -8000;
@@ -1385,74 +1417,86 @@ namespace shig {
                     }
                 }
                 else {
-                    ve += -5000;
+                    ve += -60000;
                     if (cd.pat.id == 6) {
-                        ve += -5000;
+                        ve += -30000;
                     }
                     else if (cd.pat.id == 1) {
-                        ve += -2000;
+                        ve += -10000;
                     }
 
                 }
 
-                if (gcs.btb > -1)btbc += -200;
+                if (gcs.btb > -1)btbc += -20000;
 
             }
         }
         else if (L.size() == 3) {
             if (gcs.TS_kind == 1) {
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
                     ve += 200000;
                 }
                 else {
                     ve += 700000;
                 }
 
-                if (gcs.btb > -1)btbc += 10000;
+                if (gcs.btb > -1)btbc += 100000;
 
             }
             else if (gcs.TS_kind == 2) {
                 ve += 0;
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                if (gcs.height_sum > 96 || gcs.height_mxm > 12) {
                     ve -= 0;
                 }
             }
             else {
 
-                if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+                if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
                     ve += 10000;
-
                     if (cd.pat.id == 1) {
-                        ve += 2000;
+                        ve += 4000;
                     }
+                }
+                else if (gcs.height_sum > 64 && gcs.height_mxm > 8) {
+                    ve += -10000;
+                    /*if (cd.pat.id == 6) {
+                        ve += -1000;
+                    }
+                    else if (cd.pat.id == 1) {
+                        ve += -1000;
+                    }*/
                 }
                 else {
-                    ve += -200;
+                    ve += -20000;
                     if (cd.pat.id == 1) {
-                        ve += -500;
+                        ve += -5000;
                     }
                 }
 
-                if (gcs.btb > -1)btbc += -1000;
+                if (gcs.btb > -1)btbc += -10000;
 
             }
         }
         else if (L.size() == 4) {
-            ve += 40000000;
-            if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+            if (gcs.height_sum > 96 && gcs.height_mxm > 12) {
                 ve += 200000;
             }
+            else if (gcs.height_sum > 64 && gcs.height_mxm > 8) {
+                ve += 300000;
+            }
+            else {
+                ve += 500000;
+            }
 
-            if (gcs.btb > -1)btbc += 1000;
+            if (gcs.btb > -1)btbc += 8000;
 
         }
 
-        //fusion *= 100; cd.update(fusion);
 
         LL ve_rate = 500;
-        if (gcs.height_sum > hs || gcs.height_mxm > hm) {
+        /*if (gcs.height_sum > hs || gcs.height_mxm > hm) {
             ve_rate *= 10;
-        }
+        }*/
 
         ve *= ve_rate;
         //cd.update(ve);
@@ -1467,30 +1511,30 @@ namespace shig {
         //cd.update(contact);
         cd.scr.contact = contact;
 
-        high *= 3600;
+        high *= 5400;
         //cd.update(high);
         cd.scr.height = high;
 
         //cd.update(AIshigune::gs_BFS(cd, gcs));
         //cd.scr.closed = AIshigune::gs_BFS(cd, q_field_AI);
-        if (gcs.height_sum < hs || gcs.height_mxm < hm) {
+        if (gcs.height_sum < 64 || gcs.height_mxm < 8) {
             cd.scr.closed = AIshigune::gs_BFS(cd, q_field_AI) * 1500;
         }
         else {
             cd.scr.closed = AIshigune::gs_BFS(cd, q_field_AI) * 1000;
         }
 
-        if (gcs.height_sum < hs && gcs.height_mxm < hm) {
+        if (gcs.height_sum < 80 && gcs.height_mxm < 10) {
             if (cd.isSFT) {
                 //cd.update(-20);
-                cd.scr.sum += 0;
+                cd.scr.sum += -20;
             }
         }
         else
         {
             if (cd.isSFT) {
                 //cd.update(0);
-                cd.scr.sum += -100;
+                cd.scr.sum += 0;
             }
         }
 
@@ -2693,8 +2737,8 @@ bool ReadTempData(string& name, TetriPlate& ttrp) {
         int l, ls, id, tn, bf; //mino num : connect list num : ttrp id
         char rtdC[256];
         string rtdS = "";
-        fscanf_s(fp, "%d %d %d %d %d %s ", &l, &ls, &id, &tn, &bf, rtdC, 64);
-        for (int i = 0; i < 64; i++) {
+        fscanf_s(fp, "%d %d %d %d %d %s ", &l, &ls, &id, &tn, &bf, rtdC, 256);
+        for (int i = 0; i < 256; i++) {
             if (rtdC[i] == '\0') {
                 rtdS = std::string(rtdC, i);
                 break;

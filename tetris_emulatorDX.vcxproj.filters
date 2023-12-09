@@ -161,5 +161,17 @@
     <None Include="template\data\newDT_LS_4-1.ttrp" />
     <None Include="template\data\newDT_LS_5-1.ttrp" />
     <None Include="template\data\newDT_LS_4-2.ttrp" />
+    <None Include="template\data\HachimitsuS_1-0.ttrp" />
+    <None Include="template\data\HachimitsuS_1-3.ttrp" />
+    <None Include="template\data\HachimitsuS_2-1_T.ttrp" />
+    <None Include="template\data\HachimitsuS_2-2_T.ttrp" />
+    <None Include="template\data\HachimitsuS_2-3_T.ttrp" />
+    <None Include="template\data\HachimitsuS_2-4_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_1-0.ttrp" />
+    <None Include="template\data\HachimitsuZ_1-3.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-1_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-2_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-3_T.ttrp" />
+    <None Include="template\data\HachimitsuZ_2-4_T.ttrp" />
   </ItemGroup>
 </Project>
