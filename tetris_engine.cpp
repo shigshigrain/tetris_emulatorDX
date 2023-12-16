@@ -141,7 +141,7 @@ bool add_garbage(int line) {
     }
     shig_rep(i, fh - line) {
         if (i >= field.size())return false;
-        pre_field[i + line] = field[i];
+        pre_field[(size_t)i + line] = field[i];
     }
 
     field = pre_field;
@@ -157,7 +157,7 @@ bool make_garbage(int X, int Y, bool sft) {
             pre_field[i] = field[i];
         }
         shig_rep(i, field.size() - Y - 1) {
-            pre_field[i + Y + 1] = field[i + Y];
+            pre_field[(size_t)i + Y + 1] = field[(size_t)i + Y];
         }
     }
     field[Y] = garbage;
@@ -172,7 +172,7 @@ void tspin_check(int toX, int toY, Tetri& ts) {
         return;
     }
     int ts_cnt = 0;
-    int size = ts.px_size;
+    //int size = ts.px_size;
     int rot = ts.rot;
 
     VI testX = { 0, 0, 2, 2 };
@@ -226,7 +226,7 @@ void tspin_check(int toX, int toY, Tetri& ts) {
 bool move_check(int toX, int toY) {
     int cnt = 0, cntt = 4;
     int rot = now.rot;
-    int size = now.px_size;
+    //int size = now.px_size;
     int H = now.mino[rot].size();
     int W = now.mino[rot][0].size();
     shig_rep(i, H) {
@@ -247,7 +247,7 @@ bool move_check(int toX, int toY) {
 bool move_check(int toX, int toY, Tetri& check) {
     int cnt = 0, cntt = 4;
     int rot = check.rot;
-    int size = check.px_size;
+    //int size = check.px_size;
     int H = check.mino[rot].size();
     int W = check.mino[rot][0].size();
     shig_rep(i, H) {
@@ -267,7 +267,7 @@ bool move_check(int toX, int toY, Tetri& check) {
 
 void SRS_rot(int lr) {//l=-1 r=1
     Tetri test = now;
-    int size = test.px_size;
+    //int size = test.px_size;
     int to_X = 0, to_Y = 0, rot = test.rot;
     bool can = true;
     if (test.id == 1) {//I-mino SRS
@@ -765,7 +765,7 @@ void SRS_rot(int lr) {//l=-1 r=1
 
 void print_mino(int p) {
     int rot = now.rot;
-    int size = now.px_size;
+    //int size = now.px_size;
     int H = now.mino[rot].size();
     int W = now.mino[rot][0].size();
     shig_rep(i, H) {
@@ -791,7 +791,7 @@ void print_ghost(int p) {
     int sft = -1;
     while (move_check(0, sft, ghost_mino))ghost_mino.addY(sft);
     int rot = ghost_mino.rot;
-    int size = ghost_mino.px_size;
+    //int size = ghost_mino.px_size;
     int id = ghost_mino.id;
     int H = ghost_mino.mino[rot].size();
     int W = ghost_mino.mino[rot][0].size();
@@ -817,7 +817,7 @@ set<int> erase_check() {
     set<int> erase_itr;
     print_mino(2);
     int rot = now.rot;
-    int size = now.px_size;
+    //int size = now.px_size;
     int H = now.mino[rot].size();
     int pW = field[0].size();
 

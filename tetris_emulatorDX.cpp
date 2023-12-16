@@ -308,7 +308,7 @@ void show_mino_his() {
     unsigned int Color = GetColor(0, 0, 0);
     DrawFormatString(20, 375, Color, "%s", "n : r,x,y,id");
     shig_rep(i, mh.size()) {
-        DrawFormatString(20, 400 + 15 * i, Color, "%d : %s", i + 1, mh[i]);
+        DrawFormatString(20, 400 + 15 * i, Color, "%d : %s", i + 1, mh[i].c_str());
     }
 
     return;
@@ -465,7 +465,7 @@ void show_field_AI(int flag, shig::AIshigune &ai) {
 
     pair<int, string> sttrp = ai.get_sttrp_name();
     DrawFormatString(20, 620, Color, "%s", "id: name:");
-    DrawFormatString(20, 635, Color, "%d  %s", sttrp.first, sttrp.second);
+    DrawFormatString(20, 635, Color, "%d  %s", sttrp.first, sttrp.second.c_str());
 
 
     DxLib::ScreenFlip();

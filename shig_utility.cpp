@@ -21,7 +21,7 @@ namespace shig {
 			else return mum + 1;
 		}
 
-		return long long(0);
+		return 0LL;
 	}
 
 

@@ -1,0 +1,18 @@
+-r
+C:\Users\Soya Kawasaki\source\repos\tetris_emulatorDX_AI\Intel® VTune™ Profiler Results\tetris_emulatorDX\r001hs
+--itt-config=frame
+--event-mux-factor=5
+--data-limit-mb=1000
+--disk-space-limit=0
+--mrte-type=java,dotnet
+--stack-unwind-limit=8388608
+--event-config=CPU_CLK_UNHALTED.THREAD:sa=2496000,CPU_CLK_UNHALTED.REF_TSC:sample:sa=2496000,INST_RETIRED.ANY:sample:sa=2496000,CPU_CLK_UNHALTED.DISTRIBUTED:sa=2496000,TOPDOWN.SLOTS:sample:sa=2000003,UOPS_RETIRED.SLOTS:sample:sa=2000003,TOPDOWN_RETIRING.ALL:sample:sa=2000003,TOPDOWN.SLOTS_P:sample:sa=2000003,FP_ARITH_INST_RETIRED.SCALAR_SINGLE:sa=2000003,FP_ARITH_INST_RETIRED.128B_PACKED_SINGLE:sa=2000003,FP_ARITH_INST_RETIRED.256B_PACKED_SINGLE:sa=2000003,FP_ARITH_INST_RETIRED.SCALAR_DOUBLE:sa=2000003,FP_ARITH_INST_RETIRED.128B_PACKED_DOUBLE:sa=2000003,FP_ARITH_INST_RETIRED.256B_PACKED_DOUBLE:sa=2000003,UOPS_EXECUTED.X87:sa=2000003,UOPS_EXECUTED.THREAD:sa=2000003
+--platform-type=148
+--uncore-sampling-interval=10
+--mrte-mode=auto
+--itt-config=task,event,counter
+--etw-config=clr
+--p-state-trigger=CPU_CLK_UNHALTED.REF_TSC
+--app-working-dir=C:\Users\Soya Kawasaki\source\repos\tetris_emulatorDX_AI\
+--
+C:\Users\Soya Kawasaki\source\repos\tetris_emulatorDX_AI\x64\Release\tetris_emulatorDX.exe
