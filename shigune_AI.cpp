@@ -226,7 +226,7 @@ namespace shig {
         cv = vector<CmdPattern>(0);
         cv.reserve(100);
         cp_itr = cp.begin();
-        ttrp_name_list = VS(10, "");
+        ttrp_name_list = VS(0);
         ttrp_id_list = VI(0, 0);
         ttrp_list = vector<TetriPlate>(0);
         ttrp_bgnF = VI(0, 0);
@@ -694,7 +694,7 @@ namespace shig {
         // â°ì¸ÇÍíTçı 
         w = 0;
         if (gc.ttrp_able) {
-            for (auto&& bc : BaseCmdS) {
+            for (auto&& bc : BaseCmdD) {
                 SearchTree.push(bc);
             }
         }
@@ -1064,6 +1064,7 @@ namespace shig {
             if (ch.at(idnt).at(rot).at(j) == 1) {
                 //cnt_m++;
                 int xp = cd.pat.X + j;
+                if (xp < 0 || xp >= 10)continue;
                 int h = cd.pat.Y - gcs.height.at(xp) - 1;
                 if (h >= 0 && h < H) {
                     if (cd.pat.mino.at(rot).at(h).at(j) != 0) {
@@ -1090,7 +1091,7 @@ namespace shig {
         }
 
         // contact V2
-        const LL pnl_A = 4000, pnl_B = 2000, pnl_C = -2000;
+        const LL pnl_A = 3000, pnl_B = 1000, pnl_C = -1000;
 
         if (cd.pat.id == 1) {
             if (cd.pat.rot == 0 || cd.pat.rot == 2) {
@@ -1303,7 +1304,7 @@ namespace shig {
             }
 
             if (closure >= 4) {
-                touch = shig::secure_add(touch, -8000);
+                touch = shig::secure_add(touch, -8000LL);
                 thcls++;
             }
             else {
@@ -1315,7 +1316,7 @@ namespace shig {
         touch = shig::secure_add(touch, thc * 1000);
 
         if (thcls == 0) {
-            touch = shig::secure_add(touch, 10000);
+            touch = shig::secure_add(touch, 10000LL);
         }
 
         /*
@@ -2606,7 +2607,7 @@ namespace shig {
 
     bool AIshigune::ttrp_check(CmdPattern& slc, int& sle, GameContainer& gct) {
 
-        VI mnL = make_order_list(gct);
+        //VI mnL = make_order_list(gct);
          
         if (gct.ttrp_able == false)return true;
 
@@ -2714,12 +2715,9 @@ namespace shig {
 
     GameContainer AIshigune::update_gc(CmdPattern& ct, GameContainer gcp) {
 
-        //int rot = ct.pat.rot, size = ct.pat.px_size;
-
         set<int> itr = AIshigune::erase_check_AI(ct.pat, gcp);
         int itr_s = (int)itr.size();
 
-        //const VI empty = { 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 };
         VVI proxy(0); proxy.reserve(45);
 
         shig_rep(i, fh) {
@@ -2732,12 +2730,9 @@ namespace shig {
 
         if (ct.cmd_list.at(0) == 1) gcp.hold_AI = gcp.current_AI;
         if ((int)gcp.q_next_AI.size() <= 1) {
-            //gcp.current_AI = 0;
-            //*
             shig_rep(i, NS_a.size()) {
                 gcp.q_next_AI.push(NS_a.at(i));
             }
-            //*/
         }
         if ((int)gcp.q_next_AI.size() != 0) {
             gcp.current_AI = gcp.q_next_AI.front();
@@ -2806,30 +2801,53 @@ namespace shig {
 
 bool GetTempNameList(VS& name_list) {
     int n = 0;
-    FILE* fp = NULL;
-    fopen_s(&fp, "template\\tetriplate_list.txt", "r");
-    //hndl_tmplist = FileRead_open("template\\tetriplate_list.txt");
-    //if (hndl_tmplist == 0)return false;
+    //FILE* fp = NULL;
+    //fopen_s(&fp, "template\\tetriplate_list.txt", "r");
+    ////hndl_tmplist = FileRead_open("template\\tetriplate_list.txt");
+    ////if (hndl_tmplist == 0)return false;
 
-    if (fp != NULL) {
-        fscanf_s(fp, "%d", &n);
-        if (n < 0)n = 0;
+    //if (fp != NULL) {
+    //    fscanf_s(fp, "%d", &n);
+    //    if (n < 0)n = 0;
 
-        VS list(n);
-        shig_rep(i, n) {
-            char tmpC[64];
-            fscanf_s(fp, "%s", tmpC, 64);
-            if (tmpC[0] == '\0' || tmpC[0] == '/') {
-                i--;
-                continue;
-            }
-            list[i] = tmpC;
-            list[i] = "template\\data\\" + list[i];
+    //    VS list(n);
+    //    shig_rep(i, n) {
+    //        char tmpC[64];
+    //        fscanf_s(fp, "%s", tmpC, 64);
+    //        if (tmpC[0] == '\0' || tmpC[0] == '/') {
+    //            i--;
+    //            continue;
+    //        }
+    //        list[i] = tmpC;
+    //        list[i] = "template\\data\\" + list[i];
+    //    }
+
+    //    name_list = list;
+
+    //    fclose(fp);
+    //}
+
+    std::ifstream ifs("template\\tetriplate_list.txt");
+    if (ifs.fail()) {
+        std::cerr << "failed to open \"template\\tetriplate_list.txt\" ";
+        exit(-4);
+    }
+
+    std::string readS;
+    std::getline(ifs, readS);
+    stringstream ss(readS);
+    ss >> n;
+
+    while (std::getline(ifs, readS)) {
+        stringstream sl(readS);
+        std::string tempS;
+        sl >> tempS;
+        if (tempS[0] == '\0' || tempS[0] == '/') {
+
         }
-
-        name_list = list;
-
-        fclose(fp);
+        else {
+            name_list.push_back("template\\data\\" + tempS);
+        }
     }
 
     return true;
