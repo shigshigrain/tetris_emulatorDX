@@ -2801,15 +2801,14 @@ namespace shig {
 
 bool GetTempNameList(VS& name_list) {
     int n = 0;
+
     //FILE* fp = NULL;
     //fopen_s(&fp, "template\\tetriplate_list.txt", "r");
     ////hndl_tmplist = FileRead_open("template\\tetriplate_list.txt");
     ////if (hndl_tmplist == 0)return false;
-
     //if (fp != NULL) {
     //    fscanf_s(fp, "%d", &n);
     //    if (n < 0)n = 0;
-
     //    VS list(n);
     //    shig_rep(i, n) {
     //        char tmpC[64];
@@ -2821,9 +2820,7 @@ bool GetTempNameList(VS& name_list) {
     //        list[i] = tmpC;
     //        list[i] = "template\\data\\" + list[i];
     //    }
-
     //    name_list = list;
-
     //    fclose(fp);
     //}
 
@@ -2854,67 +2851,63 @@ bool GetTempNameList(VS& name_list) {
 
 }
 
-bool ReadTempData(string& name, TetriPlate& ttrp) {
+bool ReadTempData(const std::string& name, TetriPlate& ttrp) {
 
-    const char* fname = name.c_str();
-    FILE* fp = NULL;
-    fopen_s(&fp, fname, "r");
-    if (fp == NULL) {
-        int z = 0;
-        string zs = "";
-        ttrp.set(z, z, z, z, zs, z);
-        vector<Tetri> zt = { Tetri(0, 0, 0, 0) };
-        VI zts(0, 0);
-        ttrp.set_list(zt, zts);
-        VI zv(0, 0);
-        ttrp.set_id_list(zv);
-        vector<pairI2> zp(0, make_pair(0, 0));
-        ttrp.set_terms(zp);
-        return false;
+    std::ifstream ifs(name);
+    if (ifs.fail()) {
+        std::cerr << "failed to open -> " << name << "\n";
+        exit(-5);
     }
-    else {
-        int l, ls, id, tn, bf; //mino num : connect list num : ttrp id
-        char rtdC[256];
-        string rtdS = "";
-        fscanf_s(fp, "%d %d %d %d %d %s ", &l, &ls, &id, &tn, &bf, rtdC, 256);
-        for (int i = 0; i < 256; i++) {
-            if (rtdC[i] == '\0') {
-                rtdS = std::string(rtdC, i);
-                break;
-            }
-        }
-        ttrp.set(l, ls, id, tn, rtdS, bf);
 
-        //
-        vector<Tetri> tpl(l);
-        VI ts(l);
-        shig_rep(i, l) {
-            int r, x, y, d, s;
-            fscanf_s(fp, "%d %d %d %d %d", &r, &x, &y, &d, &s);
+    int l = 0, ls = 0, id = 0, tn = 0, bf = 0; //mino num : connect list num : ttrp id
+    std::string rtdS = "";
+
+    std::string readS;
+    std::getline(ifs, readS);
+    std::stringstream ss(readS);
+    ss >> l >> ls >> id >> tn >> bf >> rtdS;
+    ttrp.set(l, ls, id, tn, rtdS, bf);
+
+    // mino座標読み込み
+    if (l > 0) {
+        vector<Tetri> tpl(0);
+        std::vector<int> ts(0);
+        for (int i = 0; i < l; i++) {
+            int r = 0, x = 0, y = 0, d = 0, s = 0;
+            std::getline(ifs, readS);
+            std::stringstream mns(readS);
+            mns >> r >> x >> y >> d >> s;
             Tetri tp(r, x, y, d);
-            tpl[i] = tp;
-            ts[i] = s;
+            tpl.push_back(tp);
+            ts.push_back(s);
         }
         ttrp.set_list(tpl, ts);
+    }
 
-        //
-        VI vil(ls);
-        shig_rep(i, ls) {
-            int temp = 0;
-            fscanf_s(fp, "%d", &temp);
-            vil[i] = temp;
+    // 次に遷移できるテンプレid 
+    if (ls > 0) {
+        std::vector<int> vil(0);
+        for (int i = 0; i < ls; i++) {
+            int tid = 0;
+            std::getline(ifs, readS);
+            std::stringstream tpid(readS);
+            tpid >> tid;
+            vil.push_back(tid);
         }
         ttrp.set_id_list(vil);
+    }
 
-        //
-        vector<pairI2> vmp(tn);
-        shig_rep(i, tn) {
+    // 選択条件
+    if (tn > 0) {
+        std::vector<pair<int, int>> vmp(0);
+        for (int i = 0; i < tn; i++) {
             int ll = 0, rr = 0;
-            fscanf_s(fp, "%d %d", &ll, &rr);
-            vmp[i] = make_pair(ll, rr);
+            std::getline(ifs, readS);
+            std::stringstream terms(readS);
+            terms >> ll >> rr;
+            vmp.push_back(std::make_pair(ll, rr));
         }
         ttrp.set_terms(vmp);
-        fclose(fp);
     }
 
     return true;

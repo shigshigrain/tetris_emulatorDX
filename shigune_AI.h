@@ -1292,6 +1292,6 @@ namespace shig {
 }
 
 bool GetTempNameList(VS& name_list);
-bool ReadTempData(string& name, TetriPlate& ttrp);
+bool ReadTempData(const std::string& name, TetriPlate& ttrp);
 
 

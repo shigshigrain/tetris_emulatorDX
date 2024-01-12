@@ -129,9 +129,11 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>"C:\DxLibNoneModel_NoneSoftDrawCode_VC";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Soya Kawasaki\source\repos\TetrisEmulator_gen2\U_AI_Shigune;C:\Users\Soya Kawasaki\source\repos\TetrisEmulator_gen2\U_TetriCore;C:\DxLibNoneModel_NoneSoftDrawCode_VC</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <UseProcessorExtensions>AVX2</UseProcessorExtensions>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,14 +150,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\sykws\source\repos\tetris_emulatorDX_AI\tetris_emulatorDX.h;C:\Users\sykws\source\repos\tetris_emulatorDX_AI;C:\DxLibNoneModel_NoneSoftDrawCode_VC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Soya Kawasaki\source\repos\TetrisEmulator_gen2\U_AI_Shigune;C:\Users\Soya Kawasaki\source\repos\TetrisEmulator_gen2\U_TetriCore;C:\DxLibNoneModel_NoneSoftDrawCode_VC</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/arch:AVX2 %(AdditionalOptions)</AdditionalOptions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <UseProcessorExtensions>AVX2</UseProcessorExtensions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
